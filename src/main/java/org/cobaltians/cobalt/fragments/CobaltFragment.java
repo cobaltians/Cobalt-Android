@@ -936,45 +936,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
         boolean messageHandled = false;
 
         switch (control) {
-            // PICKER
-            case Cobalt.JSControlPicker:
-                try {
-                    String type = data.getString(Cobalt.kJSType);
-                    // DATE
-                    if (type.equals(Cobalt.JSPickerDate)) {
-                        JSONObject date = data.optJSONObject(Cobalt.kJSDate);
-
-                        Calendar calendar = Calendar.getInstance();
-                        int year = calendar.get(Calendar.YEAR);
-                        int month = calendar.get(Calendar.MONTH);
-                        int day = calendar.get(Calendar.DAY_OF_MONTH);
-
-                        if (date != null
-                            && date.has(Cobalt.kJSYear)
-                            && date.has(Cobalt.kJSMonth)
-                            && date.has(Cobalt.kJSDay)) {
-                            year = date.getInt(Cobalt.kJSYear);
-                            month = date.getInt(Cobalt.kJSMonth) - 1;
-                            day = date.getInt(Cobalt.kJSDay);
-                        }
-
-                        JSONObject texts = data.optJSONObject(Cobalt.kJSTexts);
-                        String title = texts.optString(Cobalt.kJSTitle, null);
-                        String clear = texts.optString(Cobalt.kJSClear, null);
-                        String cancel = texts.optString(Cobalt.kJSCancel, null);
-                        String validate = texts.optString(Cobalt.kJSValidate, null);
-
-                        showDatePickerDialog(year, month, day, title, clear, cancel, validate, callback);
-
-                        messageHandled = true;
-                    }
-                }
-                catch(JSONException exception) {
-                    if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - handleUi: " + Cobalt.kJSType +
-                            " field is missing.\n" + data);
-                    exception.printStackTrace();
-                }
-                break;
             // ALERT
             case Cobalt.JSControlAlert:
                 showAlertDialog(data, callback);
@@ -1639,56 +1600,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
             }
             alertDialog.show();
         }
-    }
-
-	/*************************************************************************************
-     * DATE PICKER
-     ************************************************************************************/
-
-    private void showDatePickerDialog(int year, int month, int day, String title, String delete,
-                                      String cancel, String validate, String callbackID) {
-    	Bundle args = new Bundle();
-    	args.putInt(CobaltDatePickerFragment.ARG_YEAR, year);
-    	args.putInt(CobaltDatePickerFragment.ARG_MONTH, month);
-    	args.putInt(CobaltDatePickerFragment.ARG_DAY, day);
-    	args.putString(CobaltDatePickerFragment.ARG_TITLE, title);
-    	args.putString(CobaltDatePickerFragment.ARG_DELETE, delete);
-    	args.putString(CobaltDatePickerFragment.ARG_CANCEL, cancel);
-    	args.putString(CobaltDatePickerFragment.ARG_VALIDATE, validate);
-    	args.putString(CobaltDatePickerFragment.ARG_CALLBACK_ID, callbackID);
-
-        final CobaltDatePickerFragment fragment = new CobaltDatePickerFragment();
-        fragment.setArguments(args);
-        fragment.setListener(this);
-
-        ((Activity) mContext).runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                fragment.show(((FragmentActivity) mContext).getSupportFragmentManager(), "datePicker");
-            }
-        });
-    }
-    
-    protected void sendDate(int year, int month, int day, String callbackID) {
-    	try {
-            if (year != -1
-                && month != -1
-                && day != -1) {
-                JSONObject date = new JSONObject();
-                date.put(Cobalt.kJSYear, year);
-                date.put(Cobalt.kJSMonth, ++month);
-                date.put(Cobalt.kJSDay, day);
-
-                sendCallback(callbackID, date);
-    		}
-            else {
-                sendCallback(callbackID, null);
-            }
-		}
-        catch (JSONException e) {
-            if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendDate: JSONException");
-			e.printStackTrace();
-		}
     }
 
     /********************************************************

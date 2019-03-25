@@ -205,20 +205,6 @@ public class Cobalt {
     public final static String kVisible = "visible";
     public final static String kEnabled = "enabled";
 
-    // DATE PICKER
-    public static final String JSControlPicker = "picker";
-    public static final String JSPickerDate = "date";
-    public static final String kJSDate = "date";
-    public static final String kJSDay = "day";
-    public static final String kJSMonth = "month";
-    public static final String kJSYear = "year";
-    public static final String kJSTexts = "texts";
-    public static final String kJSTitle ="title";
-    public static final String kJSCancel = "cancel";
-    //public static final String kJSDelete = "delete";
-    public static final String kJSClear = "clear";
-    public static final String kJSValidate = "validate";
-
     // TOAST
     public final static String JSControlToast = "toast";
 
