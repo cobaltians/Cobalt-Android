@@ -222,12 +222,12 @@ public class Cobalt {
 
     // PULL TO REFRESH
     public final static String JSControlPullToRefresh = "pullToRefresh";
-    public final static String JSEventPullToRefresh = "cobalt:pullToRefresh";
+    public final static String JSEventPullToRefresh = "cobalt:onPullToRefresh";
     public final static String JSCallbackPullToRefreshDidRefresh = "pullToRefreshDidRefresh";
 
     // INFINITE SCROLL
     public final static String JSControlInfiniteScroll = "infiniteScroll";
-    public final static String JSEventInfiniteScroll= "cobalt:infiniteScroll";
+    public final static String JSEventInfiniteScroll= "cobalt:onInfiniteScroll";
     public final static String JSCallbackInfiniteScrollDidRefresh = "infiniteScrollDidRefresh";
 
     //PLUGIN

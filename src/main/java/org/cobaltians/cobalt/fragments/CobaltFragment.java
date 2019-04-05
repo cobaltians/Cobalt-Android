@@ -1218,30 +1218,30 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                 if (dataForModal != null) {
                     intent.putExtra(Cobalt.kJSData, dataForModal.toString());
                 }
-
+    
+                // Sends callback to store current activity & HTML page for dismiss
+                try {
+                    JSONObject messageData = new JSONObject();
+                    messageData.put(Cobalt.kJSPage, getPage());
+                    messageData.put(Cobalt.kJSController, mContext.getClass().getName());
+        
+                    JSONObject message = new JSONObject();
+                    message.put(Cobalt.kJSType, Cobalt.JSTypeNavigation);
+                    message.put(Cobalt.kJSAction, Cobalt.JSActionNavigationModal);
+                    message.put(Cobalt.kJSData, messageData);
+        
+                    sendMessage(message);
+                }
+                catch (JSONException exception) {
+                    exception.printStackTrace();
+                }
+                
                 ((Activity) mContext).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mContext.startActivity(intent);
                     }
                 });
-
-                // Sends callback to store current activity & HTML page for dismiss
-                try {
-                    JSONObject messageData = new JSONObject();
-                    messageData.put(Cobalt.kJSPage, getPage());
-                    messageData.put(Cobalt.kJSController, mContext.getClass().getName());
-    
-                    JSONObject message = new JSONObject();
-                    message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
-                    message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
-                    message.put(Cobalt.kJSData, messageData);
-                    
-                    sendMessage(message);
-                }
-                catch (JSONException exception) {
-                    exception.printStackTrace();
-                }
             }
             else if (Cobalt.DEBUG) {
                 Log.e(Cobalt.TAG,  TAG + " - presentModal: unable to present modal " + controller + " controller.");
