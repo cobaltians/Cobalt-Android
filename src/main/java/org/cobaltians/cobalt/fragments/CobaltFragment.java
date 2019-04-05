@@ -580,9 +580,15 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                     // CALLBACK
                     case Cobalt.JSTypeCallBack:
                         try {
-                            String callbackId = jsonObj.getString(Cobalt.kJSCallback);
+                            final String callbackId = jsonObj.getString(Cobalt.kJSCallback);
                             data = jsonObj.optJSONObject(Cobalt.kJSData);
-                            messageHandled = handleCallback(callbackId, data);
+                            ((Activity) mContext).runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    onUnhandledCallback(callbackId, data);
+                                }
+                            });
+                            messageHandled = true;
                         }
                         catch(JSONException exception) {
                             if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - onCobaltMessage: " +
@@ -887,46 +893,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	}
 
     protected void onReady() { }
-
-	private boolean handleCallback(final String callback, final JSONObject data) {
-        switch(callback) {
-            case Cobalt.JSCallbackOnBackButtonPressed:
-                try {
-                    onBackPressed(data.getBoolean(Cobalt.kJSValue));
-                    return true;
-                }
-                catch (JSONException exception) {
-                    if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - handleCallback " +
-                            Cobalt.JSCallbackOnBackButtonPressed + ": missing value field.");
-                    exception.printStackTrace();
-                    return false;
-                }
-            case Cobalt.JSCallbackPullToRefreshDidRefresh:
-                ((Activity)mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onPullToRefreshDidRefresh();
-                    }
-                });
-                return true;
-            case Cobalt.JSCallbackInfiniteScrollDidRefresh:
-                ((Activity)mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onInfiniteScrollDidRefresh();
-                    }
-                });
-                return true;
-            default:
-                ((Activity) mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onUnhandledCallback(callback, data);
-                    }
-                });
-                return true;
-        }
-	}
 	
 	protected abstract boolean onUnhandledCallback(String callback, JSONObject data);
 	
@@ -961,8 +927,51 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                     exception.printStackTrace();
                 }
                 break;
+            // PULL TO REFRESH
+            case Cobalt.JSControlPullToRefresh:
+                try {
+                    final String action = data.getString(Cobalt.kJSAction);
+                    if (Cobalt.JSActionDismiss.equals(action))
+                    {
+                        ((Activity) mContext).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                onPullToRefreshDidRefresh();
+                            }
+                        });
+                    }
+                    
+                    messageHandled = true;
+                }
+                catch (JSONException exception) {
+                    if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - handleUi: " + Cobalt.kJSAction +
+                                                        " field is missing.\n" + data);
+                    exception.printStackTrace();
+                }
+                break;
+            // INFINITE SCROLL
+            case Cobalt.JSControlInfiniteScroll:
+                try {
+                    final String action = data.getString(Cobalt.kJSAction);
+                    if (Cobalt.JSActionDismiss.equals(action))
+                    {
+                        ((Activity) mContext).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                onInfiniteScrollDidRefresh();
+                            }
+                        });
+                    }
+            
+                    messageHandled = true;
+                }
+                catch (JSONException exception) {
+                    if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - handleUi: " + Cobalt.kJSAction +
+                                                        " field is missing.\n" + data);
+                    exception.printStackTrace();
+                }
+                break;
             // BARS
-
             case Cobalt.JSControlBars:
                 try {
                     String action = data.getString(Cobalt.kJSAction);

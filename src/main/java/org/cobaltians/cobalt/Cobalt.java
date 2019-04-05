@@ -182,7 +182,8 @@ public class Cobalt {
     // UI
     public final static String JSTypeUI = "ui";
     public final static String kJSUIControl = "control";
-
+    public final static String JSActionDismiss = "dismiss";
+    
     // ALERT
     public final static String JSControlAlert = "alert";
     public final static String kJSAlertTitle = "title";
@@ -220,10 +221,12 @@ public class Cobalt {
     public final static String JSEventonWebLayerDismissed = "onWebLayerDismissed";
 
     // PULL TO REFRESH
+    public final static String JSControlPullToRefresh = "pullToRefresh";
     public final static String JSEventPullToRefresh = "pullToRefresh";
     public final static String JSCallbackPullToRefreshDidRefresh = "pullToRefreshDidRefresh";
 
     // INFINITE SCROLL
+    public final static String JSControlInfiniteScroll = "infiniteScroll";
     public final static String JSEventInfiniteScroll= "infiniteScroll";
     public final static String JSCallbackInfiniteScrollDidRefresh = "infiniteScrollDidRefresh";
 
