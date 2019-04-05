@@ -432,7 +432,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                             script = script.replaceAll("%", "%25");
                         }
 
-                        String url = "javascript:cobalt.execute(" + script + ");";
+                        String url = "javascript:cobalt.private.execute(" + script + ");";
                         mWebView.loadUrl(url);
                     }
                 });
