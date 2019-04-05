@@ -1334,7 +1334,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	 * This method should NOT be overridden in subclasses.
 	 */
 	public void askWebViewForBackPermission() {
-		sendEvent(Cobalt.JSEventOnBackButtonPressed, null, Cobalt.JSCallbackOnBackButtonPressed);
+		sendEvent(Cobalt.JSEventOnBackButtonPressed, null, null);
 	}
 	
 	/**
@@ -1648,7 +1648,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     }
 
     private void refreshWebView() {
-        sendEvent(Cobalt.JSEventPullToRefresh, null, Cobalt.JSCallbackPullToRefreshDidRefresh);
+        sendEvent(Cobalt.JSEventPullToRefresh, null, null);
 	}
 	
 	private void onPullToRefreshDidRefresh() {
@@ -1679,7 +1679,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	}
 
 	private void infiniteScrollRefresh() {
-        sendEvent(Cobalt.JSEventInfiniteScroll, null, Cobalt.JSCallbackInfiniteScrollDidRefresh);
+        sendEvent(Cobalt.JSEventInfiniteScroll, null, null);
         mIsInfiniteScrollRefreshing = true;
 	}
 	

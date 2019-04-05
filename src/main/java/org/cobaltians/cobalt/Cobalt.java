@@ -150,10 +150,10 @@ public class Cobalt {
     public final static String kJSEvent = "event";
 
     // APP EVENTS
-    public final static String JSEventOnAppStarted = "onAppStarted";
-    public final static String JSEventOnAppBackground = "onAppBackground";
-    public final static String JSEventOnAppForeground = "onAppForeground";
-    public final static String JSEventOnPageShown = "onPageShown";
+    public final static String JSEventOnAppStarted = "cobalt:onAppStarted";
+    public final static String JSEventOnAppBackground = "cobalt:onAppBackground";
+    public final static String JSEventOnAppForeground = "cobalt:onAppForeground";
+    public final static String JSEventOnPageShown = "cobalt:onPageShown";
 
     // INTENT
     public final static String JSTypeIntent = "intent";
@@ -176,8 +176,7 @@ public class Cobalt {
     public final static String kJSClearHistory = "clearHistory";
 
     // BACK BUTTON
-    public final static String JSEventOnBackButtonPressed = "onBackButtonPressed";
-    public final static String JSCallbackOnBackButtonPressed = "onBackButtonPressed";
+    public final static String JSEventOnBackButtonPressed = "cobalt:onBackButtonPressed";
 
     // UI
     public final static String JSTypeUI = "ui";
@@ -222,12 +221,12 @@ public class Cobalt {
 
     // PULL TO REFRESH
     public final static String JSControlPullToRefresh = "pullToRefresh";
-    public final static String JSEventPullToRefresh = "pullToRefresh";
+    public final static String JSEventPullToRefresh = "cobalt:pullToRefresh";
     public final static String JSCallbackPullToRefreshDidRefresh = "pullToRefreshDidRefresh";
 
     // INFINITE SCROLL
     public final static String JSControlInfiniteScroll = "infiniteScroll";
-    public final static String JSEventInfiniteScroll= "infiniteScroll";
+    public final static String JSEventInfiniteScroll= "cobalt:infiniteScroll";
     public final static String JSCallbackInfiniteScrollDidRefresh = "infiniteScrollDidRefresh";
 
     //PLUGIN
