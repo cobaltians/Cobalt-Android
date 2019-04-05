@@ -185,6 +185,7 @@ public class Cobalt {
     
     // ALERT
     public final static String JSControlAlert = "alert";
+    public final static String kJSAlertId = "alertId";
     public final static String kJSAlertTitle = "title";
     public final static String kJSAlertButtons = "buttons";
     public final static String kJSAlertCancelable = "cancelable";

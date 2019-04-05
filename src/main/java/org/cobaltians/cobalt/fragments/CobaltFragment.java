@@ -702,8 +702,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                                 case Cobalt.JSActionNavigationModal:
                                     try {
                                         data = jsonObj.getJSONObject(Cobalt.kJSData);
-                                        String callbackId = jsonObj.optString(Cobalt.kJSCallback, null);
-                                        presentModal(data, callbackId);
+                                        presentModal(data);
                                         messageHandled = true;
                                     }
                                     catch(JSONException exception) {
@@ -765,8 +764,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                         try {
                             String control = jsonObj.getString(Cobalt.kJSUIControl);
                             data = jsonObj.getJSONObject(Cobalt.kJSData);
-                            callback = jsonObj.optString(Cobalt.kJSCallback, null);
-                            messageHandled = handleUi(control, data, callback);
+                            messageHandled = handleUi(control, data);
                         }
                         catch(JSONException exception) {
                             if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - onCobaltMessage: " +
@@ -898,13 +896,13 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	
 	protected abstract boolean onUnhandledEvent(String event, JSONObject data, String callback);
 
-	private boolean handleUi(String control, JSONObject data, String callback) {
+	private boolean handleUi(String control, JSONObject data) {
         boolean messageHandled = false;
 
         switch (control) {
             // ALERT
             case Cobalt.JSControlAlert:
-                showAlertDialog(data, callback);
+                showAlertDialog(data);
                 messageHandled = true;
                 break;
             // TOAST
@@ -1203,7 +1201,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
         ((CobaltActivity) mContext).popTo(controller, page, data);
     }
 	
-	private void presentModal(JSONObject data, String callBackID) {
+	private void presentModal(JSONObject data) {
         try {
             String page = data.getString(Cobalt.kJSPage);
             String controller = data.optString(Cobalt.kJSController, null);
@@ -1230,10 +1228,14 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 
                 // Sends callback to store current activity & HTML page for dismiss
                 try {
-                    JSONObject callbackData = new JSONObject();
-                    callbackData.put(Cobalt.kJSPage, getPage());
-                    callbackData.put(Cobalt.kJSController, mContext.getClass().getName());
-                    sendCallback(callBackID, callbackData);
+                    JSONObject messageData = new JSONObject();
+                    messageData.put(Cobalt.kJSPage, getPage());
+                    messageData.put(Cobalt.kJSController, mContext.getClass().getName());
+    
+                    JSONObject message = new JSONObject();
+                    message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
+                    message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
+                    message.put(Cobalt.kJSData, messageData);
                 }
                 catch (JSONException exception) {
                     exception.printStackTrace();
@@ -1488,8 +1490,9 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	 * ALERT DIALOG
 	 *****************************************************************************************************************/
 
-	private void showAlertDialog(JSONObject data, final String callback) {		
+	private void showAlertDialog(JSONObject data) {
 		try {
+            final long identifier = data.getLong(Cobalt.kJSAlertId);
 			final String title = data.optString(Cobalt.kJSAlertTitle);
 			final String message = data.optString(Cobalt.kJSMessage);
 			final boolean cancelable = data.optBoolean(Cobalt.kJSAlertCancelable, false);
@@ -1509,16 +1512,19 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                             alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "OK", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if (callback != null) {
-                                        try {
-                                            JSONObject data = new JSONObject();
-                                            data.put(Cobalt.kJSAlertButtonIndex, 0);
-                                            sendCallback(callback, data);
-                                        }
-                                        catch (JSONException exception) {
-                                            if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
-                                            exception.printStackTrace();
-                                        }
+                                    try {
+                                        JSONObject data = new JSONObject();
+                                        data.put(Cobalt.kJSAlertId, identifier);
+                                        data.put(Cobalt.kJSAlertButtonIndex, 0);
+    
+                                        JSONObject message = new JSONObject();
+                                        message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
+                                        message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
+                                        message.put(Cobalt.kJSData, data);
+                                    }
+                                    catch (JSONException exception) {
+                                        if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
+                                        exception.printStackTrace();
                                     }
                                 }
                             });
@@ -1544,30 +1550,33 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                                 alertDialog.setButton(buttonId, buttons.getString(i), new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        if (callback != null) {
-                                            int buttonIndex;
-                                            switch (which) {
-                                                case DialogInterface.BUTTON_NEGATIVE:
-                                                default:
-                                                    buttonIndex = 0;
-                                                    break;
-                                                case DialogInterface.BUTTON_NEUTRAL:
-                                                    buttonIndex = 1;
-                                                    break;
-                                                case DialogInterface.BUTTON_POSITIVE:
-                                                    buttonIndex = 2;
-                                                    break;
-                                            }
+                                        int buttonIndex;
+                                        switch (which) {
+                                            case DialogInterface.BUTTON_NEGATIVE:
+                                            default:
+                                                buttonIndex = 0;
+                                                break;
+                                            case DialogInterface.BUTTON_NEUTRAL:
+                                                buttonIndex = 1;
+                                                break;
+                                            case DialogInterface.BUTTON_POSITIVE:
+                                                buttonIndex = 2;
+                                                break;
+                                        }
 
-                                            try {
-                                                JSONObject data = new JSONObject();
-                                                data.put(Cobalt.kJSAlertButtonIndex, buttonIndex);
-                                                sendCallback(callback, data);
-                                            }
-                                            catch (JSONException exception) {
-                                                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
-                                                exception.printStackTrace();
-                                            }
+                                        try {
+                                            JSONObject data = new JSONObject();
+                                            data.put(Cobalt.kJSAlertId, identifier);
+                                            data.put(Cobalt.kJSAlertButtonIndex, buttonIndex);
+    
+                                            JSONObject message = new JSONObject();
+                                            message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
+                                            message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
+                                            message.put(Cobalt.kJSData, data);
+                                        }
+                                        catch (JSONException exception) {
+                                            if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
+                                            exception.printStackTrace();
                                         }
                                     }
                                 });
