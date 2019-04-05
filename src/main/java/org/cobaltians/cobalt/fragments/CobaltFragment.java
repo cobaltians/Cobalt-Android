@@ -1236,6 +1236,8 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                     message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
                     message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
                     message.put(Cobalt.kJSData, messageData);
+                    
+                    sendMessage(message);
                 }
                 catch (JSONException exception) {
                     exception.printStackTrace();
@@ -1521,6 +1523,8 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                                         message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
                                         message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
                                         message.put(Cobalt.kJSData, data);
+    
+                                        sendMessage(message);
                                     }
                                     catch (JSONException exception) {
                                         if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
@@ -1573,6 +1577,8 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                                             message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
                                             message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
                                             message.put(Cobalt.kJSData, data);
+                                            
+                                            sendMessage(message);
                                         }
                                         catch (JSONException exception) {
                                             if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
