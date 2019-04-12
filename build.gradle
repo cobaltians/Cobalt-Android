@@ -19,6 +19,6 @@ android {
 }
 
 dependencies {
-    implementation "com.android.support:appcompat-v7:$project.ext.buildToolsVersion"
-    implementation "com.android.support:design::$project.ext.buildToolsVersion"
+    implementation "com.android.support:appcompat-v7:$project.ext.androidSupportAppCompatVersion"
+    implementation "com.android.support:design:$project.ext.androidSupportDesignVersion"
 }
