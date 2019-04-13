@@ -234,6 +234,13 @@ public class Cobalt {
     public final static String JSTypePlugin = "plugin";
     public final static String kJSPluginName = "name";
 
+    //PUBSUB
+    public final static String JSTypePubsub = "pubsub";
+    public final static String JSActionSubscribe = "subscribe";
+    public final static String JSActionUnsubscribe = "unsubscribe";
+    public final static String JSActionPublish = "publish";
+    public final static String kJSChannel = "channel";
+    
     /**********************************************************************************************
      * MEMBERS
      **********************************************************************************************/

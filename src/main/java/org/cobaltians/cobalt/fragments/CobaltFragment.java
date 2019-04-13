@@ -64,6 +64,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import org.cobaltians.cobalt.pubsub.PubSub;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -757,6 +758,36 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                         break;
                     // PLUGIN
                     case Cobalt.JSTypePlugin:
+                        messageHandled = mPluginManager.onMessage(mContext, this, jsonObj);
+                        break;
+                    // PUBSUB
+                    case Cobalt.JSTypePubsub:
+                        try
+                        {
+                            String pubsubAction = jsonObj.getString(Cobalt.kJSAction);
+                            String pubsubChannel = jsonObj.getString(Cobalt.kJSChannel);
+                            
+                            switch(pubsubAction)
+                            {
+                                case Cobalt.JSActionSubscribe:
+                                    PubSub.getInstance().subscribeWebToChannel(this,
+                                                                               pubsubChannel);
+                                    break;
+                                case Cobalt.JSActionUnsubscribe:
+                                    PubSub.getInstance().unsubscribeWebFromChannel(this,
+                                                                                   pubsubChannel);
+                                    break;
+                                case Cobalt.JSActionPublish:
+                                    JSONObject pubsubMessage = jsonObj.getJSONObject(Cobalt.kJSMessage);
+                                    PubSub.getInstance().publishMessage(pubsubMessage, pubsubChannel);
+                                    break;
+                            }
+                        }
+                        catch(JSONException exception)
+                        {
+                            Log.e(TAG, "onCobaltMessage: action, channel and/or message fields are missing or not a string (message: + "  + message + ")");
+                            exception.printStackTrace();
+                        }
                         messageHandled = mPluginManager.onMessage(mContext, this, jsonObj);
                         break;
                     // UI
