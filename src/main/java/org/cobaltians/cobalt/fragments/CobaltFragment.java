@@ -788,7 +788,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                             Log.e(TAG, "onCobaltMessage: action, channel and/or message fields are missing or not a string (message: + "  + message + ")");
                             exception.printStackTrace();
                         }
-                        messageHandled = mPluginManager.onMessage(mContext, this, jsonObj);
                         break;
                     // UI
                     case Cobalt.JSTypeUI:
