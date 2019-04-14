@@ -59,7 +59,7 @@ class PubSubReceiver
     /**
      * The array which keeps track of subscribed channels
      */
-    protected ArrayList<String> mChannels;
+    private ArrayList<String> mChannels;
     /**
      * The listener to notify when the fragment is null (deallocated or not correctly initialized)
      * or the PubSubReceiver is not subscribed to any channel any more

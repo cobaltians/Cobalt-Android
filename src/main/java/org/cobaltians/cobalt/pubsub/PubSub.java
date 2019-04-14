@@ -82,42 +82,6 @@ public final class PubSub implements PubSubInternalInterface
 	 *
      **********************************************************************************************/
 
-    /*
-	@Override
-	public void onMessage(CobaltPluginWebContainer webContainer, JSONObject message) {
-		try {
-			String action = message.getString("action");
-			JSONObject data = message.getJSONObject("data");
-			String channel = data.getString("channel");
-			JSONObject innerMessage = data.optJSONObject("message");
-			String callback = data.optString("callback", null);
-
-			switch(action) {
-				case "publish":
-					publishMessage(innerMessage, channel);
-					break;
-				case "subscribe":
-					subscribeFragmentToChannel(webContainer.getFragment(), channel, callback);
-					break;
-				case "unsubscribe":
-					unsubscribeFragmentFromChannel(webContainer.getFragment(), channel);
-					break;
-				default:
-					break;
-			}
-		}
-		catch(JSONException exception) {
-			Log.e(TAG, "onMessage - Some fields may be missing or not of expected type: string action, object data or string data.channel");
-		}
-	}
-	*/
- 
-	/**********************************************************************************************
-	 *
-	 * HELPERS
-	 *
-	 **********************************************************************************************/
-
 	/**
 	 * Broadcasts the specified message to PubSubReceivers which have subscribed to the specified channel.
 	 * @param message the message to broadcast to PubSubReceivers via the channel.
@@ -191,7 +155,65 @@ public final class PubSub implements PubSubInternalInterface
 			unsubscribingReceiver.unsubscribeFromChannel(channel);
 		}
 	}
-
+	
+	/**
+	 * Subscribes the specified PubSubInterface to messages sent via the specified channel.
+	 * @implNote if no PubSubReceiver was created for the specified PubSubInterface, creates it.
+	 * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
+	 * @param channel the channel the PubSubReceiver subscribes.
+	 */
+	public final void subscribeToChannel(@NonNull PubSubInterface listener,
+			@NonNull String channel)
+	{
+		PubSubReceiver subscribingReceiver = null;
+		
+		for (PubSubReceiver receiver : new ArrayList<>(mReceivers))
+		{
+			if (! (receiver instanceof PubSubWebReceiver)
+				&& listener.equals(receiver.getListener()))
+			{
+				subscribingReceiver = receiver;
+				break;
+			}
+		}
+		
+		if (subscribingReceiver != null)
+		{
+			subscribingReceiver.subscribeToChannel(channel);
+		}
+		else
+		{
+			subscribingReceiver = new PubSubReceiver(listener, channel, this);
+			mReceivers.add(subscribingReceiver);
+		}
+	}
+	
+	/**
+	 * Unsubscribes the specified PubSubInterface from messages sent via the specified channel.
+	 * @param listener the PubSubInterface to unsubscribes from the channel.
+	 * @param channel the channel from which the messages come from.
+	 */
+	public final void unsubscribeFromChannel(@NonNull PubSubInterface listener,
+			@NonNull String channel)
+	{
+		PubSubReceiver unsubscribingReceiver = null;
+		
+		for (PubSubReceiver receiver : new ArrayList<>(mReceivers))
+		{
+			if (! (receiver instanceof PubSubWebReceiver)
+				&& listener.equals(receiver.getListener()))
+			{
+				unsubscribingReceiver = receiver;
+				break;
+			}
+		}
+		
+		if (unsubscribingReceiver != null)
+		{
+			unsubscribingReceiver.unsubscribeFromChannel(channel);
+		}
+	}
+	
 	/**********************************************************************************************
 	 *
 	 * INTERNAL LISTENER
