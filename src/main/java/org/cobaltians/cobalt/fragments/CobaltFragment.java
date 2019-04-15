@@ -514,7 +514,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
      * @param data: the object containing response fields
      * @param callbackID: the Web callback.
      */
-    public void sendPlugin(final String plugin, final JSONObject data, final String callbackID) {
+    public void sendPlugin(final String plugin, final JSONObject data) {
         if (plugin != null
             && plugin.length() > 0) {
             try {
@@ -522,7 +522,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                 jsonObj.put(Cobalt.kJSType, Cobalt.JSTypePlugin);
                 jsonObj.put(Cobalt.kJSPluginName, plugin);
                 jsonObj.put(Cobalt.kJSData, data);
-                jsonObj.put(Cobalt.kJSCallback, callbackID);
                 executeScriptInWebView(jsonObj);
             }
             catch (JSONException exception) {
