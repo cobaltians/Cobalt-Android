@@ -57,15 +57,13 @@ public final class CobaltPluginManager {
 	private static CobaltPluginManager sInstance;
 	
 	private final Context mContext;
-	private final HashMap<String, Class<? extends CobaltAbstractPlugin>> mPluginsMap;
-	
+
 	/******************************************************************************
      * CONSTRUCTORS
      ******************************************************************************/
 	
 	private CobaltPluginManager(Context context) {
 		mContext = context;
-		mPluginsMap = Cobalt.getInstance(mContext).getPlugins();
 	}
 	
 	public static CobaltPluginManager getInstance(Context context) {
@@ -81,64 +79,75 @@ public final class CobaltPluginManager {
      ****************************************************************************************************************************************/
 	
 	public boolean onMessage(Context context, CobaltFragment fragment, final JSONObject message) {
+		String pluginClassName = null;
+		Class<? extends CobaltAbstractPlugin> pluginClass = null;
+
 		try {
-			String pluginName = message.getString(Cobalt.kJSPluginName);
-			Class<? extends CobaltAbstractPlugin> pluginClass = mPluginsMap.get(pluginName);
-			if (pluginClass != null) {
+			JSONObject pluginClasses = message.getJSONObject(Cobalt.kJSPluginClasses);
+			pluginClassName = pluginClasses.getString(Cobalt.kJSPluginAndroid);
+		}
+		catch(JSONException exception) {
+			if (Cobalt.DEBUG) {
+				Log.e(TAG, "onMessage: cant get android class name from json");
+				exception.printStackTrace();
+			}
+		}
+		if (pluginClassName != null) {
+			try {
+				Class<?> testClass = Class.forName(pluginClassName);
+				if (CobaltAbstractPlugin.class.isAssignableFrom(testClass)) {
+					// TODO fix Unchecked cast: 'java.lang.Class<capture<?>>' to 'java.lang.Class<? extends org.cobaltians.cobalt.plugin.CobaltAbstractPlugin
+					pluginClass = (Class<? extends CobaltAbstractPlugin>) testClass;
+				}
+				else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + "onMessage: " + pluginClassName + " does not inherit from CobaltAbstractActivity!");
+			}
+			catch (ClassNotFoundException exception) {
+				if (Cobalt.DEBUG) {
+					Log.e(Cobalt.TAG, TAG + "onMessage : " + pluginClassName + " class not found!");
+					exception.printStackTrace();
+				}
+			}
+		}
+		if (pluginClass != null) {
+			try {
+				Method pluginGetInstanceMethod = pluginClass.getDeclaredMethod(GET_INSTANCE_METHOD_NAME, CobaltPluginWebContainer.class);
 				try {
-					Method pluginGetInstanceMethod = pluginClass.getDeclaredMethod(GET_INSTANCE_METHOD_NAME, CobaltPluginWebContainer.class);
-					try {
-						final CobaltPluginWebContainer webContainer = new CobaltPluginWebContainer((Activity) context, fragment);
-						final CobaltAbstractPlugin plugin = (CobaltAbstractPlugin) pluginGetInstanceMethod.invoke(null, webContainer);
+					final CobaltPluginWebContainer webContainer = new CobaltPluginWebContainer((Activity) context, fragment);
+					final CobaltAbstractPlugin plugin = (CobaltAbstractPlugin) pluginGetInstanceMethod.invoke(null, webContainer);
 
-						((Activity) mContext).runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								plugin.onMessage(webContainer, message);
-							}
-						});
+					((Activity) mContext).runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							plugin.onMessage(webContainer, message);
+						}
+					});
 
-						return true;
-					}
-					catch (NullPointerException exception) {
-						if (Cobalt.DEBUG) {
-							Log.e(TAG, "onMessage: " + pluginClass.getSimpleName() + ".getInstance(CobaltPluginWebContainer) method must be static.");
-							exception.printStackTrace();
-						}
-					}
-					catch (IllegalAccessException exception) {
-						if (Cobalt.DEBUG) exception.printStackTrace();
-					}
-					catch (InvocationTargetException exception) {
-						if (Cobalt.DEBUG) {
-							Log.e(TAG, "onMessage: exception thrown by " + pluginClass.getSimpleName() + ".getInstance(CobaltPluginWebContainer) method.");
-							exception.printStackTrace();
-						}
+					return true;
+				}
+				catch (NullPointerException exception) {
+					if (Cobalt.DEBUG) {
+						Log.e(TAG, "onMessage: " + pluginClass.getSimpleName() + ".getInstance(CobaltPluginWebContainer) method must be static.");
+						exception.printStackTrace();
 					}
 				}
-				catch (NoSuchMethodException exception) {
+				catch (IllegalAccessException exception) {
+					if (Cobalt.DEBUG) exception.printStackTrace();
+				}
+				catch (InvocationTargetException exception) {
 					if (Cobalt.DEBUG) {
-						Log.e(TAG, "onMessage: no method found matching " + pluginClass.getSimpleName() + ".getInstance(CobaltPluginWebContainer).");
+						Log.e(TAG, "onMessage: exception thrown by " + pluginClass.getSimpleName() + ".getInstance(CobaltPluginWebContainer) method.");
 						exception.printStackTrace();
 					}
 				}
 			}
-			else if (Cobalt.DEBUG) Log.e(TAG, "onMessage: no plugin class found for name " + pluginName + ".");
-		}
-		catch(JSONException exception) {
-			if (Cobalt.DEBUG) {
-				Log.e(TAG, "onMessage: name field not found or not a String.");
-				exception.printStackTrace();
+			catch (NoSuchMethodException exception) {
+				if (Cobalt.DEBUG) {
+					Log.e(TAG, "onMessage: no method found matching " + pluginClass.getSimpleName() + ".getInstance(CobaltPluginWebContainer).");
+					exception.printStackTrace();
+				}
 			}
 		}
-		
+
 		return false;
-	}
-	
-	public void onFragmentDestroyed(Context context, CobaltFragment fragment) {
-		Collection<Class <? extends CobaltAbstractPlugin>> pluginClasses = mPluginsMap.values();
-		for (Class <? extends CobaltAbstractPlugin> pluginClass : pluginClasses) {
-			
-		}
 	}
 }

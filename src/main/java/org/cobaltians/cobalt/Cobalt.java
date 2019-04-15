@@ -233,6 +233,8 @@ public class Cobalt {
     //PLUGIN
     public final static String JSTypePlugin = "plugin";
     public final static String kJSPluginName = "name";
+    public final static String kJSPluginClasses = "classes";
+    public final static String kJSPluginAndroid = "android";
 
     //PUBSUB
     public final static String JSTypePubsub = "pubsub";

@@ -211,8 +211,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     @Override
 	public void onDestroy() {
         super.onDestroy();
-		
-		mPluginManager.onFragmentDestroyed(mContext, this);
 	}
 
     @Override
