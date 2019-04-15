@@ -21,4 +21,5 @@ android {
 dependencies {
     api "com.android.support:appcompat-v7:$project.ext.androidSupportAppCompatVersion"
     api "com.android.support:design:$project.ext.androidSupportDesignVersion"
+	api 'junit:junit:4.12'
 }
