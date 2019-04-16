@@ -509,10 +509,9 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     }
 
     /**
-     * Calls the Web callback with an object containing response fields
+     * Calls the Web plugin with an object of data
      * @param plugin: the name of the plugin.
-     * @param data: the object containing response fields
-     * @param callbackID: the Web callback.
+     * @param data: the object of data to send
      */
     public void sendPlugin(final String plugin, final JSONObject data) {
         if (plugin != null
