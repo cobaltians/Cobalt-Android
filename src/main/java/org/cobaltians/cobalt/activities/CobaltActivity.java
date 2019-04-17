@@ -60,6 +60,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.cobaltians.cobalt.pubsub.PubSub;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -185,27 +186,27 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
         Cobalt.getInstance(getApplicationContext()).onActivityStarted(this);
     }
 
-    public void onAppStarted() {
-        Fragment fragment = getSupportFragmentManager().findFragmentById(getFragmentContainerId());
-        if (fragment != null
-            && CobaltFragment.class.isAssignableFrom(fragment.getClass())) {
-            ((CobaltFragment) fragment).sendEvent(Cobalt.JSEventOnAppStarted, null, null);
-        }
-        else if (Cobalt.DEBUG) Log.i(Cobalt.TAG,    TAG + " - onAppStarted: no fragment container found \n"
-                                                    + " or fragment found is not an instance of CobaltFragment. \n"
-                                                    + "Drop onAppStarted event.");
+    public void onAppStarted()
+    {
+        PubSub.getInstance().publishMessage(null, Cobalt.JSEventOnAppStarted);
     }
 
-    public void onAppForeground() {
+    public void onAppForeground()
+    {
         Fragment fragment = getSupportFragmentManager().findFragmentById(getFragmentContainerId());
         if (fragment != null
-            && CobaltFragment.class.isAssignableFrom(fragment.getClass())) {
+            && CobaltFragment.class.isAssignableFrom(fragment.getClass()))
+        {
             ((CobaltFragment) fragment).executeToJSWaitingCalls();
-            ((CobaltFragment) fragment).sendEvent(Cobalt.JSEventOnAppForeground, null, null);
         }
-        else if (Cobalt.DEBUG) Log.i(Cobalt.TAG,    TAG + " - onAppForeground: no fragment container found \n"
-                                                    + " or fragment found is not an instance of CobaltFragment. \n"
-                                                    + "Drop onAppForeground event.");
+        else if (Cobalt.DEBUG)
+        {
+            Log.i(Cobalt.TAG, TAG + " - onAppForeground: no fragment container found \n"
+                              + " or fragment found is not an instance of CobaltFragment. \n"
+                              + "Drop executing waiting calls.");
+        }
+    
+        PubSub.getInstance().publishMessage(null, Cobalt.JSEventOnAppForeground);
     }
 
     @Override
@@ -228,15 +229,9 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
         Cobalt.getInstance(getApplicationContext()).onActivityStopped(this);
     }
 
-    public void onAppBackground() {
-        Fragment fragment = getSupportFragmentManager().findFragmentById(getFragmentContainerId());
-        if (fragment != null
-            && CobaltFragment.class.isAssignableFrom(fragment.getClass())) {
-            ((CobaltFragment) fragment).sendEvent(Cobalt.JSEventOnAppBackground, null, null);
-        }
-        else if (Cobalt.DEBUG) Log.i(Cobalt.TAG,    TAG + " - onAppBackground: no fragment container found \n"
-                                                    + " or fragment found is not an instance of CobaltFragment. \n"
-                                                    + "Drop onAppBackground event.");
+    public void onAppBackground()
+    {
+        PubSub.getInstance().publishMessage(null, Cobalt.JSEventOnAppBackground);
     }
 
     @Override
