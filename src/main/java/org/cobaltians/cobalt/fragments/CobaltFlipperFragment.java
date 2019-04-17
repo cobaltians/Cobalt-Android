@@ -80,19 +80,6 @@ public class CobaltFlipperFragment extends CobaltFragment implements IGestureLis
 		super.addWebView();
 	}
 	
-	@Override
-	protected boolean onUnhandledCallback(String name, JSONObject data) {
-		return false;
-	}
-	
-	@Override
-	protected boolean onUnhandledEvent(String name, JSONObject data, String callback) {
-		return false;
-	}
-	
-	@Override
-	protected boolean onUnhandledMessage(JSONObject message) { return false; }
-	
 	/********************************************************
 	 * SWIPE
 	 *******************************************************/

@@ -74,7 +74,7 @@ import org.json.JSONObject;
  * 
  * @author Diane Moebs
  */
-public abstract class CobaltFragment extends Fragment implements IScrollListener, SwipeRefreshLayout.OnRefreshListener {
+public class CobaltFragment extends Fragment implements IScrollListener, SwipeRefreshLayout.OnRefreshListener {
 
     // TAG
     protected final static String TAG = CobaltFragment.class.getSimpleName();
@@ -570,55 +570,13 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
             String type = jsonObj.optString(Cobalt.kJSType, null);
 			if (type != null) {
                 final JSONObject data;
-                final String callback;
                 String action;
 
                 switch (type) {
-                    // CALLBACK
-                    case Cobalt.JSTypeCallBack:
-                        try {
-                            final String callbackId = jsonObj.getString(Cobalt.kJSCallback);
-                            data = jsonObj.optJSONObject(Cobalt.kJSData);
-                            ((Activity) mContext).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    onUnhandledCallback(callbackId, data);
-                                }
-                            });
-                            messageHandled = true;
-                        }
-                        catch(JSONException exception) {
-                            if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - onCobaltMessage: " +
-                                            Cobalt.kJSCallback + " field is missing.\n" + message);
-                            exception.printStackTrace();
-                        }
-                        break;
                     // COBALT IS READY
                     case Cobalt.JSTypeCobaltIsReady:
                         onCobaltIsReady(jsonObj.optString(Cobalt.kJSVersion, null));
                         messageHandled = true;
-                        break;
-                    // EVENT
-                    case Cobalt.JSTypeEvent:
-                        try {
-                            final String event = jsonObj.getString(Cobalt.kJSEvent);
-                            data = jsonObj.optJSONObject(Cobalt.kJSData);
-                            callback = jsonObj.optString(Cobalt.kJSCallback, null);
-
-                            ((Activity) mContext).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    onUnhandledEvent(event, data, callback);
-                                }
-                            });
-
-                            messageHandled = true;
-                        }
-                        catch(JSONException exception) {
-                            if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - onCobaltMessage: " +
-                                    Cobalt.kJSEvent + " field is missing.\n" + message);
-                            exception.printStackTrace();
-                        }
                         break;
                     // INTENT
                     case Cobalt.JSTypeIntent:
@@ -859,13 +817,10 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 			}
 
             // UNHANDLED MESSAGE
-            if (! messageHandled) {
-                ((Activity) mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onUnhandledMessage(jsonObj);
-                    }
-                });
+            if (! messageHandled &&
+                Cobalt.DEBUG)
+            {
+                Log.e(Cobalt.TAG, TAG + " - onCobaltMessage: message not handled.\n" + message);
             }
 		} 
 		catch (JSONException exception) {
@@ -917,10 +872,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	}
 
     protected void onReady() { }
-	
-	protected abstract boolean onUnhandledCallback(String callback, JSONObject data);
-	
-	protected abstract boolean onUnhandledEvent(String event, JSONObject data, String callback);
 
 	private boolean handleUi(String control, JSONObject data) {
         boolean messageHandled = false;
@@ -1170,8 +1121,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
             }
         });
     }
-
-	protected abstract boolean onUnhandledMessage(JSONObject message);
 	
 	/*****************************************************************************************************************
 	 * NAVIGATION

@@ -122,21 +122,6 @@ public class CobaltWebLayerFragment extends CobaltFragment {
 	 * COBALT
 	 *
 	 **********************************************************************************************/
-
-	@Override
-	protected boolean onUnhandledCallback(String name, JSONObject data) {
-		return false;		
-	}
-
-	@Override
-	protected boolean onUnhandledEvent(String name, JSONObject data, String callback) {
-		return false;
-	}
-	
-	@Override
-	protected boolean onUnhandledMessage(final JSONObject message) {
-        return false;
-    }
 	
 	@Override
 	protected void onBackPressed(boolean allowedToBack) {

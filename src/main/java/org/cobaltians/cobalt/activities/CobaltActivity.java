@@ -69,7 +69,7 @@ import org.json.JSONObject;
  * {@link Activity} containing a {@link CobaltFragment}.
  * @author Diane
  */
-public abstract class CobaltActivity extends AppCompatActivity implements ActionViewMenuItemListener {
+public class CobaltActivity extends AppCompatActivity implements ActionViewMenuItemListener {
 
     protected static final String TAG = CobaltActivity.class.getSimpleName();
 
@@ -328,7 +328,10 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
 	 * This method should be overridden in subclasses.
 	 * @return a new instance of the fragment contained.
 	 */
-	protected abstract CobaltFragment getFragment();
+	protected CobaltFragment getFragment()
+    {
+	    return new CobaltFragment();
+    }
 
 	protected int getLayoutToInflate() {
 		return R.layout.activity_cobalt;
