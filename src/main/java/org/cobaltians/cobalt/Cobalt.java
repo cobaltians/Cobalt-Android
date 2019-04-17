@@ -216,9 +216,9 @@ public class Cobalt {
     public final static String JSActionWebLayerBringToFront = "bringToFront";
     public final static String JSActionWebLayerSendToBack = "sendToBack";
     public final static String kJSWebLayerFadeDuration = "fadeDuration";
-	public final static String JSEventonWebLayerLoading = "onWebLayerLoading";
-    public final static String JSEventonWebLayerLoaded = "onWebLayerLoaded";
-    public final static String JSEventonWebLayerDismissed = "onWebLayerDismissed";
+	public final static String JSEventonWebLayerLoading = "cobalt:onWebLayerLoading";
+    public final static String JSEventonWebLayerLoaded = "cobalt:onWebLayerLoaded";
+    public final static String JSEventonWebLayerDismissed = "cobalt:onWebLayerDismissed";
 
     // PULL TO REFRESH
     public final static String JSControlPullToRefresh = "pullToRefresh";
