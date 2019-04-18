@@ -488,7 +488,7 @@ public class Cobalt {
      * @param message the message to broadcast to PubSubReceivers via the channel.
      * @param channel the channel to which broadcast the message.
      */
-    public final void publishMessage(@Nullable JSONObject message, @NonNull String channel) {
+    public static void publishMessage(@Nullable JSONObject message, @NonNull String channel) {
         PubSub.getInstance().publishMessage(message, channel);
     }
 
@@ -497,7 +497,7 @@ public class Cobalt {
      * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
      * @param channel the channel the PubSubReceiver subscribes.
      */
-    public final void subscribeToChannel(@NonNull PubSubInterface listener,
+    public static void subscribeToChannel(@NonNull PubSubInterface listener,
                                          @NonNull String channel)
     {
         PubSub.getInstance().subscribeToChannel(listener, channel);
@@ -508,7 +508,7 @@ public class Cobalt {
      * @param listener the PubSubInterface to unsubscribes from the channel.
      * @param channel the channel from which the messages come from.
      */
-    public final void unsubscribeFromChannel(@NonNull PubSubInterface listener,
+    public static void unsubscribeFromChannel(@NonNull PubSubInterface listener,
                                              @NonNull String channel)
     {
         PubSub.getInstance().unsubscribeFromChannel(listener, channel);
