@@ -33,6 +33,7 @@ import org.cobaltians.cobalt.activities.CobaltActivity;
 import org.cobaltians.cobalt.customviews.BottomBar;
 import org.cobaltians.cobalt.fragments.CobaltFragment;
 import org.cobaltians.cobalt.plugin.CobaltAbstractPlugin;
+import org.cobaltians.cobalt.pubsub.PubSub;
 
 import android.app.Activity;
 import android.content.Context;
@@ -45,6 +46,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.util.TypedValue;
@@ -55,6 +57,7 @@ import java.util.Iterator;
 
 import junit.framework.Assert;
 
+import org.cobaltians.cobalt.pubsub.PubSubInterface;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -479,6 +482,37 @@ public class Cobalt {
     /**********************************************************************************************
      * HELPER METHODS
      **********************************************************************************************/
+
+    /**
+     * Broadcasts the specified message to PubSubReceivers which have subscribed to the specified channel.
+     * @param message the message to broadcast to PubSubReceivers via the channel.
+     * @param channel the channel to which broadcast the message.
+     */
+    public final void publishMessage(@Nullable JSONObject message, @NonNull String channel) {
+        PubSub.getInstance().publishMessage(message, channel);
+    }
+
+    /**
+     * Subscribes the specified PubSubInterface to messages sent via the specified channel.
+     * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
+     * @param channel the channel the PubSubReceiver subscribes.
+     */
+    public final void subscribeToChannel(@NonNull PubSubInterface listener,
+                                         @NonNull String channel)
+    {
+        PubSub.getInstance().subscribeToChannel(listener, channel);
+    }
+
+    /**
+     * Unsubscribes the specified PubSubInterface from messages sent via the specified channel.
+     * @param listener the PubSubInterface to unsubscribes from the channel.
+     * @param channel the channel from which the messages come from.
+     */
+    public final void unsubscribeFromChannel(@NonNull PubSubInterface listener,
+                                             @NonNull String channel)
+    {
+        PubSub.getInstance().unsubscribeFromChannel(listener, channel);
+    }
 
     private JSONObject getConfiguration() {
         if (sCobaltConfiguration == null) {
