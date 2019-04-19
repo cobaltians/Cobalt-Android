@@ -135,6 +135,7 @@ public class Cobalt {
     // GENERAL
     public final static String kJSAction = "action";
     public final static String kJSCallback = "callback";
+    public final static String kJSCallbackChannel = "callbackChannel";
     public final static String kJSData = "data";
     public final static String kJSMessage = "message";
     public final static String kJSPage = "page";

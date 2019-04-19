@@ -100,8 +100,6 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
 
 	private boolean mIsInfiniteScrollRefreshing = false;
 
-	private CobaltPluginManager mPluginManager;
-
     private boolean mAllowCommit;
 
 
@@ -118,9 +116,10 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
     }
 
     @Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
-        mPluginManager = CobaltPluginManager.getInstance(mContext);
+        
         setRetainInstance(true);
     }
 
@@ -462,34 +461,11 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
 
     /**
      * Calls the Web callback with an object containing response fields
-     * @param callbackId: the Web callback.
-     * @param data: the object containing response fields
-     */
-    public void sendCallback(final String callbackId, final JSONObject data) {
-        if (callbackId != null
-                && callbackId.length() > 0) {
-            try {
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put(Cobalt.kJSType, Cobalt.JSTypeCallBack);
-                jsonObj.put(Cobalt.kJSCallback, callbackId);
-                jsonObj.put(Cobalt.kJSData, data);
-                executeScriptInWebView(jsonObj);
-            }
-            catch (JSONException exception) {
-                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendCallback: JSONException");
-                exception.printStackTrace();
-            }
-        }
-        else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendCallback: callbackId is null or empty!");
-    }
-
-    /**
-     * Calls the Web callback with an object containing response fields
      * @param event: the name of the event.
      * @param data: the object containing response fields
      * @param callbackID: the Web callback.
      */
-    public void sendEvent(final String event, final JSONObject data, final String callbackID) {
+    protected void sendEvent(final String event, final JSONObject data, final String callbackID) {
         if (event != null
                 && event.length() > 0) {
             try {
@@ -506,29 +482,6 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
             }
         }
         else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendEvent: event is null or empty!");
-    }
-
-    /**
-     * Calls the Web plugin with an object of data
-     * @param plugin: the name of the plugin.
-     * @param data: the object of data to send
-     */
-    public void sendPlugin(final String plugin, final JSONObject data) {
-        if (plugin != null
-            && plugin.length() > 0) {
-            try {
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put(Cobalt.kJSType, Cobalt.JSTypePlugin);
-                jsonObj.put(Cobalt.kJSPluginName, plugin);
-                jsonObj.put(Cobalt.kJSData, data);
-                executeScriptInWebView(jsonObj);
-            }
-            catch (JSONException exception) {
-                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendPlugin: JSONException");
-                exception.printStackTrace();
-            }
-        }
-        else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendPlugin: plugin is null or empty!");
     }
 
     /**
@@ -712,7 +665,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
                         break;
                     // PLUGIN
                     case Cobalt.JSTypePlugin:
-                        messageHandled = mPluginManager.onMessage(mContext, this, jsonObj);
+                        messageHandled = CobaltPluginManager.onMessage(mContext, this, jsonObj);
                         break;
                     // PUBSUB
                     case Cobalt.JSTypePubsub:

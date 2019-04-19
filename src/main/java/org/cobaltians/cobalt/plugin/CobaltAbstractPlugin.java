@@ -29,7 +29,8 @@
 
 package org.cobaltians.cobalt.plugin;
 
-import java.util.Vector;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import org.json.JSONObject;
 
@@ -37,46 +38,53 @@ import org.json.JSONObject;
  * 
  * @author Sébastien Famel
  */
-public abstract class CobaltAbstractPlugin {
+public abstract class CobaltAbstractPlugin
+{
 
-    /*******************************************************************************************************
+    /***********************************************************************************************
+	 *
      * MEMBERS
-     *******************************************************************************************************/
-	//TODO : Need to declare sInstance in each plugin
+	 *
+     **********************************************************************************************/
+
+    static final String GETINSTANCE_METHOD_NAME = "getInstance";
+	
+	// TODO: need to declare sInstance in each plugin
 	//protected static CobaltAbstractPlugin sInstance;
 	
-	/**
-	 * {@link Vector} containing all {@link CobaltPluginWebContainer}s which sent at least one message to this {@link CobaltAbstractPlugin} inherited singleton.
-	 */
-	protected Vector<CobaltPluginWebContainer> mWebContainerVector = new Vector<CobaltPluginWebContainer>();
-
-	/*******************************************************************************
-     * METHODS
-     *******************************************************************************/
-    
-	/**
-	 * Add the specified {@link CobaltPluginWebContainer} at the end of {@link #mWebContainerVector} if absent.
-	 * @param webContainer the CobaltPluginWebContainer to add to {@link #mWebContainerVector}.
-	 * @return true if webContainer was absent from {@link #mWebContainerVector}, false otherwise.
-	 */
-	public final boolean addWebContainer(CobaltPluginWebContainer webContainer) {
-    	if (! mWebContainerVector.contains(webContainer)) {
-    		mWebContainerVector.addElement(webContainer);
-    		
-    		return true;
-    	}
-    	
-    	return false;
-    }
-
-    /*****************************************************************************************
+	/***********************************************************************************************
+	 *
+	 * CONSTRUCTORS
+	 *
+	 **********************************************************************************************/
+	
+	// TODO: need to implement method getInstance in each plugin
+	/*
+	public static CobaltAbstractPlugin getInstance()
+	{
+		if (sInstance == null)
+		{
+			sInstance = new CobaltAbstractPlugin();
+		}
+		
+		return sInstance;
+	}
+	*/
+	
+    /***********************************************************************************************
+	 *
      * ABSTRACT METHODS
-     *****************************************************************************************/
+	 *
+     **********************************************************************************************/
     
     /**
-     * Called when a {@link CobaltPluginWebContainer} has sent a message to this {@link CobaltAbstractPlugin} inherited singleton.
+     * Called when a {@link CobaltPluginWebContainer} has sent a message
+	 * to this {@link CobaltAbstractPlugin} inherited singleton.
      * @param webContainer the {@link CobaltPluginWebContainer} which sent the message.
-     * @param message the message sent by the {@link CobaltPluginWebContainer}.
+     * @param action the action to perform by the {@link CobaltAbstractPlugin}.
+	 * @param data the data used to perform the action, may be null.
+	 * @param callbackChannel the channel used to publish a response if needed, may be null.
      */
-    public abstract void onMessage(CobaltPluginWebContainer webContainer, JSONObject message);
+    public abstract void onMessage(@NonNull CobaltPluginWebContainer webContainer,
+			@NonNull String action, @Nullable JSONObject data, @Nullable String callbackChannel);
 }
