@@ -62,7 +62,6 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 
 import org.cobaltians.cobalt.pubsub.PubSub;
 import org.json.JSONArray;
@@ -168,13 +167,14 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
     @Override
     public void onResume() {
         super.onResume();
-
-        showPendingAlertDialogs();
-        executeToJSWaitingCalls();
-
+    
         JSONObject data = ((CobaltActivity) mContext).getDataNavigation();
         sendEvent(Cobalt.JSEventOnPageShown, data, null);
         ((CobaltActivity) mContext).setDataNavigation(null);
+    
+        executeToJSWaitingCalls();
+        
+        showPendingAlertDialogs();
     }
 
     @Override
@@ -413,7 +413,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
 	 * Sends script to be executed by JavaScript in Web view
 	 * @param jsonObj: JSONObject containing script.
 	 */
-    private void executeScriptInWebView(final JSONObject jsonObj) {
+    private void executeScriptInWebView(final JSONObject jsonObj, boolean executeFirst) {
         if (jsonObj != null) {
             Activity activity = getActivity();
             if (mWebView != null
@@ -437,7 +437,14 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
             }
             else {
                 if (Cobalt.DEBUG) Log.i(Cobalt.TAG, TAG + " - executeScriptInWebView: adding message to queue: " + jsonObj);
-                mToJSWaitingCallsQueue.add(jsonObj);
+                if (executeFirst)
+                {
+                    mToJSWaitingCallsQueue.add(0, jsonObj);
+                }
+                else
+                {
+                    mToJSWaitingCallsQueue.add(jsonObj);
+                }
             }
         }
         else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - executeScriptInWebView: jsonObj is null!");
@@ -446,12 +453,12 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
     public void executeToJSWaitingCalls() {
         ArrayList<JSONObject> toJSWaitingCallsQueue = new ArrayList<>(mToJSWaitingCallsQueue);
 		int toJSWaitingCallsQueueLength = toJSWaitingCallsQueue.size();
-
+		
         mToJSWaitingCallsQueue.clear();
 
 		for (int i = 0 ; i < toJSWaitingCallsQueueLength ; i++) {
 			if (Cobalt.DEBUG) Log.i(Cobalt.TAG, TAG + " - executeToJSWaitingCalls: execute " + toJSWaitingCallsQueue.get(i).toString());
-			executeScriptInWebView(toJSWaitingCallsQueue.get(i));
+			executeScriptInWebView(toJSWaitingCallsQueue.get(i), false);
 		}
 	}
 
@@ -474,7 +481,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
                 jsonObj.put(Cobalt.kJSEvent, event);
                 jsonObj.put(Cobalt.kJSData, data);
                 jsonObj.put(Cobalt.kJSCallback, callbackID);
-                executeScriptInWebView(jsonObj);
+                executeScriptInWebView(jsonObj, Cobalt.JSEventOnPageShown.equals(event));
             }
             catch (JSONException exception) {
                 if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendEvent: JSONException");
@@ -490,7 +497,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
      */
     public void sendMessage(final JSONObject message) {
         if (message != null) {
-            executeScriptInWebView(message);
+            executeScriptInWebView(message, false);
         }
         else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendMessage: message is null !");
     }
