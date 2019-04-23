@@ -118,7 +118,8 @@ public class Cobalt {
     public final static String kActionEnabled = "enabled";
     public final static String kActionBadge = "badge";
 
-    public final static String kExtras = "extras";
+    public final static String kExtras = "cobalt";
+    public final static String kController = "controller";
     public final static String kPage = "page";
     public final static String kActivity = "activity";
     public final static String kPopAsModal = "popAsModal";
@@ -409,7 +410,8 @@ public class Cobalt {
             }
 
             if (activity.substring(0,1).equals(".")) activity = sContext.getPackageName() + activity;
-
+    
+            bundle.putString(kController, controller);
             bundle.putString(kActivity, activity);
             if (bars != null) bundle.putString(kBars, bars.toString());
             bundle.putBoolean(kPullToRefresh, enablePullToRefresh);

@@ -109,8 +109,8 @@ public class CobaltActivity extends AppCompatActivity implements ActionViewMenuI
         }
         Bundle extras = bundle.getBundle(Cobalt.kExtras);
         if (extras == null) {
-            extras = Cobalt.getInstance(this.getApplicationContext()).getConfigurationForController(getInitController());
-            extras.putString(Cobalt.kPage, getInitPage());
+            extras = Cobalt.getInstance(this.getApplicationContext()).getConfigurationForController(getController());
+            extras.putString(Cobalt.kPage, getPage());
             bundle.putBundle(Cobalt.kExtras, extras);
         }
 
@@ -130,7 +130,10 @@ public class CobaltActivity extends AppCompatActivity implements ActionViewMenuI
             mMenuListener = fragment;
 
             if (fragment != null) {
-                fragment.setArguments(extras);
+                if (fragment.getArguments() == null)
+                {
+                    fragment.setArguments(extras);
+                }
                 mAnimatedTransition = bundle.getBoolean(Cobalt.kJSAnimated, true);
 
                 if (mAnimatedTransition) {
@@ -240,12 +243,36 @@ public class CobaltActivity extends AppCompatActivity implements ActionViewMenuI
 
         sActivitiesArrayList.remove(this);
     }
-
-    public String getInitController() {
+    
+    @Nullable
+    public String getController()
+    {
+	    Bundle bundle = getIntent().getExtras();
+	    if (bundle != null)
+	    {
+	        Bundle extras = bundle.getBundle(Cobalt.kExtras);
+	        if (extras != null)
+	        {
+	            return extras.getString(Cobalt.kController);
+	        }
+	    }
+	    
         return null;
     }
-
-    public String getInitPage() {
+    
+    @Nullable
+    public String getPage()
+    {
+	    Bundle bundle = getIntent().getExtras();
+	    if (bundle != null)
+	    {
+	        Bundle extras = bundle.getBundle(Cobalt.kExtras);
+	        if (extras != null)
+	        {
+	            return extras.getString(Cobalt.kPage);
+	        }
+	    }
+	    
         return null;
     }
 
@@ -265,7 +292,7 @@ public class CobaltActivity extends AppCompatActivity implements ActionViewMenuI
         }
         Bundle extras = bundle.getBundle(Cobalt.kExtras);
         if (extras == null) {
-            extras = Cobalt.getInstance(getApplicationContext()).getConfigurationForController(getInitController());
+            extras = Cobalt.getInstance(getApplicationContext()).getConfigurationForController(getController());
         }
         if (extras.containsKey(Cobalt.kBars)) {
             try {
