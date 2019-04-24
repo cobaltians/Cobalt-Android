@@ -30,12 +30,16 @@
 package org.cobaltians.cobalt.fragments;
 
 import org.cobaltians.cobalt.Cobalt;
-import org.cobaltians.cobalt.activities.CobaltActivity;
 
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
+import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
+import org.cobaltians.cobalt.activities.CobaltActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -49,17 +53,13 @@ public class CobaltWebLayerFragment extends CobaltFragment {
     protected static final String TAG = CobaltWebLayerFragment.class.getSimpleName();
 
 	private JSONObject mData;
-	
-	/******************************************************
-	 * LIFECYCLE
-	 *****************************************************/
+	private CobaltFragment mRootFragment;
 
-	@Override
-	public void onStart() {
-		super.onStart();
-		
-		mWebView.setBackgroundColor(Color.TRANSPARENT);
-	}
+	/***********************************************************************************************
+	 *
+	 * LIFECYCLE
+	 *
+	 **********************************************************************************************/
 
 	@Override
 	public void onDestroy() {
@@ -67,10 +67,61 @@ public class CobaltWebLayerFragment extends CobaltFragment {
 		
 		super.onDestroy();
 	}
-	
-	/*************************************************************************************************************************************
+
+	/***********************************************************************************************
+	 *
+	 * MEMBERS
+	 *
+	 **********************************************************************************************/
+
+	void setRootFragment(CobaltFragment fragment) {
+		mRootFragment = fragment;
+	}
+
+	/***********************************************************************************************
+	 *
+	 * LIFECYCLE HELPERS
+	 *
+	 **********************************************************************************************/
+
+	protected void setWebViewSettings(CobaltFragment javascriptInterface) {
+		super.setWebViewSettings(javascriptInterface);
+
+		mWebView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
+		WebViewClient webViewClient = new WebViewClient() {
+
+			@Override
+			public void onPageStarted(WebView view, String url, Bitmap favicon) {
+				super.onPageStarted(view, url, favicon);
+
+				if (mRootFragment != null) {
+					mRootFragment.sendEvent(Cobalt.JSEventonWebLayerLoading, null, null);
+				}
+				else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - onPageStarted: no root fragment found");
+			}
+
+			@Override
+			public void onPageFinished(WebView view, String url) {
+				super.onPageFinished(view, url);
+
+				if (mRootFragment != null) {
+					mRootFragment.sendEvent(Cobalt.JSEventonWebLayerLoaded, null, null);
+				}
+				else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - onPageFinished: no root fragment found");
+
+				executeToJSWaitingCalls();
+			}
+		};
+
+		mWebView.setWebViewClient(webViewClient);
+	}
+
+	/***********************************************************************************************
+	 *
 	 * COBALT
-	 ************************************************************************************************************************************/
+	 *
+	 **********************************************************************************************/
 
 	@Override
 	protected boolean onUnhandledCallback(String name, JSONObject data) {
@@ -83,28 +134,8 @@ public class CobaltWebLayerFragment extends CobaltFragment {
 	}
 	
 	@Override
-	protected void onUnhandledMessage(final JSONObject message) {
-        try {
-            String type = message.optString(Cobalt.kJSType);
-
-            if (type.equals(Cobalt.JSTypeWebLayer)) {
-                String action = message.getString(Cobalt.kJSAction);
-
-                if (action.equals(Cobalt.JSActionWebLayerDismiss)) {
-                    mHandler.post(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            dismissWebLayer(message);
-                        }
-                    });
-                }
-            }
-        }
-        catch (JSONException exception) {
-            if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - onUnhandledMessage: JSONException");
-            exception.printStackTrace();
-        }
+	protected boolean onUnhandledMessage(final JSONObject message) {
+        return false;
     }
 	
 	@Override
@@ -115,10 +146,12 @@ public class CobaltWebLayerFragment extends CobaltFragment {
 		}
         else if (Cobalt.DEBUG) Log.i(Cobalt.TAG, TAG + " - onBackPressed: onBackPressed event denied by Web view");
 	}
-	
-	/********************************************************************************************
+
+	/***********************************************************************************************
+	 *
 	 * DISMISS
-	 *******************************************************************************************/
+	 *
+	 **********************************************************************************************/
 
 	protected void dismissWebLayer(JSONObject jsonObject) {
 		if (getActivity() != null) {
@@ -139,17 +172,33 @@ public class CobaltWebLayerFragment extends CobaltFragment {
 			else {
                 fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_NONE);
 			}
-
             fragmentTransaction.remove(this);
-			if (allowFragmentCommit()) fragmentTransaction.commit();
+			if (allowFragmentCommit()) {
+				fragmentTransaction.commit();
+			}
 
+			if (CobaltActivity.class.isAssignableFrom(mContext.getClass())) {
+				CobaltActivity activity = (CobaltActivity) mContext;
+				View webLayerFragmentContainer = activity.findViewById(activity.getWebLayerFragmentContainerId());
+				webLayerFragmentContainer.setVisibility(View.GONE);
+			}
 		}
 		else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - dismissWebLayer: Web layer is not attached to an activity.");
 	}
 
 	private void onDismiss() {
-		if (CobaltActivity.class.isAssignableFrom(getActivity().getClass())) {
-            ((CobaltActivity) getActivity()).onWebLayerDismiss(getPage(), mData);
+		if (mRootFragment != null) {
+			try {
+				JSONObject jsonObj = new JSONObject();
+				jsonObj.put(Cobalt.kJSPage, getPage());
+				jsonObj.put(Cobalt.kJSData, mData);
+				mRootFragment.sendEvent(Cobalt.JSEventonWebLayerDismissed, jsonObj, null);
+			}
+			catch (JSONException exception) {
+				if(Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - onDismiss: JSONException");
+				exception.printStackTrace();
+			}
 		}
+		else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - onDismiss: no root fragment found");
 	}
 }
