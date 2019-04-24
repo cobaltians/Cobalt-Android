@@ -86,7 +86,7 @@ public class Cobalt {
      * CONFIGURATION FILE
      **********************************************************************************************/
 
-    private final static String CONF_FILE = "cobalt.conf";
+    public final static String CONF_FILE = "cobalt.json";
     private final static String kControllers = "controllers";
     private final static String kPlugins = "plugins";
     private final static String kAndroid = "android";
@@ -422,7 +422,7 @@ public class Cobalt {
             return bundle;
         }
         catch (JSONException exception) {
-            if (Cobalt.DEBUG) Log.e(Cobalt.TAG,     TAG + " - getConfigurationForController: check cobalt.conf. Known issues: \n "
+            if (Cobalt.DEBUG) Log.e(Cobalt.TAG,     TAG + " - getConfigurationForController: check cobalt.json. Known issues: \n "
                                                     + "\t - controllers field not found or not a JSONObject \n "
                                                     + "\t - " + controller + " controller not found and no " + kDefaultController + " controller defined \n "
                                                     + "\t - " + controller + " or " + kDefaultController + "controller found but no " + kAndroid + "defined \n ");
@@ -474,7 +474,7 @@ public class Cobalt {
         }
         catch (JSONException exception) {
             if (Cobalt.DEBUG) {
-                Log.w(Cobalt.TAG, TAG + " - getPlugins: plugins field of cobalt.conf not found or not a JSONObject.");
+                Log.w(Cobalt.TAG, TAG + " - getPlugins: plugins field of cobalt.json not found or not a JSONObject.");
                 exception.printStackTrace();
             }
         }
@@ -524,7 +524,7 @@ public class Cobalt {
                 sCobaltConfiguration = new JSONObject(configuration);
             }
             catch (JSONException exception) {
-                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - getConfiguration: check cobalt.conf. File is missing or not at " + ASSETS_PATH + mResourcePath + CONF_FILE);
+                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - getConfiguration: check cobalt.json. File is missing or not at " + ASSETS_PATH + mResourcePath + CONF_FILE);
                 exception.printStackTrace();
                 return new JSONObject();
             }
