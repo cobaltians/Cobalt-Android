@@ -393,7 +393,7 @@ public class Cobalt {
 
             if (controller != null
                 && controllers.has(controller)) {
-                activity = controllers.getJSONObject(controller).getString(kAndroid);
+                activity = controllers.getJSONObject(controller).optString(kAndroid, null);
                 bars = controllers.getJSONObject(controller).optJSONObject(kBars);
                 enablePullToRefresh = controllers.getJSONObject(controller).optBoolean(kPullToRefresh);
                 enableInfiniteScroll = controllers.getJSONObject(controller).optBoolean(kInfiniteScroll);
@@ -401,7 +401,7 @@ public class Cobalt {
                 backgroundColor = controllers.getJSONObject(controller).optString(kBackgroundColor, BACKGROUND_COLOR_DEFAULT);
             }
             else {
-                activity = controllers.getJSONObject(kDefaultController).getString(kAndroid);
+                activity = controllers.getJSONObject(kDefaultController).optString(kAndroid, null);
                 bars = controllers.getJSONObject(kDefaultController).optJSONObject(kBars);
                 enablePullToRefresh = controllers.getJSONObject(kDefaultController).optBoolean(kPullToRefresh);
                 enableInfiniteScroll = controllers.getJSONObject(kDefaultController).optBoolean(kInfiniteScroll);
@@ -409,7 +409,14 @@ public class Cobalt {
                 backgroundColor = controllers.getJSONObject(kDefaultController).optString(kBackgroundColor, BACKGROUND_COLOR_DEFAULT);
             }
 
-            if (activity.substring(0,1).equals(".")) activity = sContext.getPackageName() + activity;
+            if (activity == null)
+            {
+                activity = "org.cobaltians.cobalt.activities.CobaltActivity";
+            }
+            else if (activity.startsWith("."))
+            {
+                activity = sContext.getPackageName() + activity;
+            }
     
             bundle.putString(kController, controller);
             bundle.putString(kActivity, activity);
@@ -424,8 +431,7 @@ public class Cobalt {
         catch (JSONException exception) {
             if (Cobalt.DEBUG) Log.e(Cobalt.TAG,     TAG + " - getConfigurationForController: check cobalt.json. Known issues: \n "
                                                     + "\t - controllers field not found or not a JSONObject \n "
-                                                    + "\t - " + controller + " controller not found and no " + kDefaultController + " controller defined \n "
-                                                    + "\t - " + controller + " or " + kDefaultController + "controller found but no " + kAndroid + "defined \n ");
+                                                    + "\t - " + controller + " controller not found and no " + kDefaultController + " controller defined \n ");
             exception.printStackTrace();
         }
 
