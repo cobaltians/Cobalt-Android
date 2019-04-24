@@ -696,6 +696,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
                                     PubSub.getInstance().publishMessage(pubsubMessage, pubsubChannel);
                                     break;
                             }
+                            messageHandled = true;
                         }
                         catch(JSONException exception)
                         {
