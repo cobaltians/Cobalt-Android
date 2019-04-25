@@ -159,11 +159,11 @@ public final class PubSub implements PubSubInternalInterface
 	/**
 	 * Subscribes the specified PubSubInterface to messages sent via the specified channel.
 	 * @implNote if no PubSubReceiver was created for the specified PubSubInterface, creates it.
-	 * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
 	 * @param channel the channel the PubSubReceiver subscribes.
+	 * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
 	 */
-	public final void subscribeToChannel(@NonNull PubSubInterface listener,
-			@NonNull String channel)
+	public final void subscribeToChannel(@NonNull String channel,
+										 @NonNull PubSubInterface listener)
 	{
 		PubSubReceiver subscribingReceiver = null;
 		
@@ -190,11 +190,11 @@ public final class PubSub implements PubSubInternalInterface
 	
 	/**
 	 * Unsubscribes the specified PubSubInterface from messages sent via the specified channel.
-	 * @param listener the PubSubInterface to unsubscribes from the channel.
 	 * @param channel the channel from which the messages come from.
+	 * @param listener the PubSubInterface to unsubscribes from the channel.
 	 */
-	public final void unsubscribeFromChannel(@NonNull PubSubInterface listener,
-			@NonNull String channel)
+	public final void unsubscribeFromChannel(@NonNull String channel,
+											 @NonNull PubSubInterface listener)
 	{
 		PubSubReceiver unsubscribingReceiver = null;
 		

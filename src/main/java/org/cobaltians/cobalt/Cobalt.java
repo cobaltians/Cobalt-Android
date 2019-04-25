@@ -503,24 +503,24 @@ public class Cobalt {
 
     /**
      * Subscribes the specified PubSubInterface to messages sent via the specified channel.
-     * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
      * @param channel the channel the PubSubReceiver subscribes.
+     * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
      */
-    public static void subscribeToChannel(@NonNull PubSubInterface listener,
-                                         @NonNull String channel)
+    public static void subscribeToChannel(@NonNull String channel,
+                                          @NonNull PubSubInterface listener)
     {
-        PubSub.getInstance().subscribeToChannel(listener, channel);
+        PubSub.getInstance().subscribeToChannel(channel, listener);
     }
 
     /**
      * Unsubscribes the specified PubSubInterface from messages sent via the specified channel.
-     * @param listener the PubSubInterface to unsubscribes from the channel.
      * @param channel the channel from which the messages come from.
+     * @param listener the PubSubInterface to unsubscribes from the channel.
      */
-    public static void unsubscribeFromChannel(@NonNull PubSubInterface listener,
-                                             @NonNull String channel)
+    public static void unsubscribeFromChannel(@NonNull String channel,
+                                              @NonNull PubSubInterface listener)
     {
-        PubSub.getInstance().unsubscribeFromChannel(listener, channel);
+        PubSub.getInstance().unsubscribeFromChannel(channel, listener);
     }
 
     private JSONObject getConfiguration() {
