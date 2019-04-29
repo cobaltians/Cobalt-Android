@@ -1,4 +1,4 @@
-package io.kristal.signature;
+package org.cobaltians.cobalt.tools;
 
 import android.content.Context;
 import android.database.Cursor;
