@@ -223,6 +223,7 @@ public class Cobalt {
     public final static String kJSWebLayerFadeDuration = "fadeDuration";
 	public final static String JSEventonWebLayerLoading = "cobalt:onWebLayerLoading";
     public final static String JSEventonWebLayerLoaded = "cobalt:onWebLayerLoaded";
+    public final static String JSEventonWebLayerLoadFailed = "cobalt:onWebLayerLoadFailed";
     public final static String JSEventonWebLayerDismissed = "cobalt:onWebLayerDismissed";
 
     // PULL TO REFRESH
