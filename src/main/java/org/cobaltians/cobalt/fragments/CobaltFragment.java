@@ -116,7 +116,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
         super.onAttach(context);
         mContext = context;
     
-        PubSub.getInstance().subscribeToChannel(this, Cobalt.JSEventOnAppStarted);
+        PubSub.getInstance().subscribeToChannel(Cobalt.JSEventOnAppStarted, this);
         
         executeFromJSWaitingCalls();
     }
@@ -223,7 +223,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
     public void onDetach() {
         mContext = null;
     
-        PubSub.getInstance().unsubscribeFromChannel(this, Cobalt.JSEventOnAppStarted);
+        PubSub.getInstance().unsubscribeFromChannel(Cobalt.JSEventOnAppStarted, this);
         
         super.onDetach();
     }
