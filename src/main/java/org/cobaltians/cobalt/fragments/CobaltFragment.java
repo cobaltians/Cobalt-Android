@@ -48,6 +48,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -64,6 +66,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import org.cobaltians.cobalt.pubsub.PubSub;
+import org.cobaltians.cobalt.pubsub.PubSubInterface;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -73,7 +76,9 @@ import org.json.JSONObject;
  * 
  * @author Diane Moebs
  */
-public class CobaltFragment extends Fragment implements IScrollListener, SwipeRefreshLayout.OnRefreshListener {
+public class CobaltFragment extends Fragment implements IScrollListener, SwipeRefreshLayout.OnRefreshListener,
+        PubSubInterface
+{
 
     // TAG
     protected final static String TAG = CobaltFragment.class.getSimpleName();
@@ -110,7 +115,9 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
     public void onAttach(Context context) {
         super.onAttach(context);
         mContext = context;
-
+    
+        PubSub.getInstance().subscribeToChannel(this, Cobalt.JSEventOnAppStarted);
+        
         executeFromJSWaitingCalls();
     }
 
@@ -159,7 +166,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
 		super.onStart();
 
         mAllowCommit = true;
-
+        
 		addWebView();
 		preloadContent();
 	}
@@ -187,7 +194,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
     @Override
 	public void onStop() {
 		super.onStop();
-		
+        
 		// Fragment will rotate or be destroyed, so we don't preload content defined in fragment's arguments again
         mPreloadOnCreate = false;
 		
@@ -215,6 +222,9 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
     @Override
     public void onDetach() {
         mContext = null;
+    
+        PubSub.getInstance().unsubscribeFromChannel(this, Cobalt.JSEventOnAppStarted);
+        
         super.onDetach();
     }
 
@@ -501,7 +511,7 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
         }
         else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendMessage: message is null !");
     }
-
+    
 	/****************************************************************************************
 	 * MESSAGE HANDLING
 	 ***************************************************************************************/
@@ -1082,7 +1092,20 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
             }
         });
     }
-	
+    
+    /***********************************************************************************************
+     * PUBSUB
+     **********************************************************************************************/
+    
+    @Override
+    public void onMessageReceived(@Nullable JSONObject message, @NonNull String channel)
+    {
+        if (Cobalt.JSEventOnAppStarted.equals(channel))
+        {
+            sendEvent(Cobalt.JSEventOnAppStarted, null, null);
+        }
+    }
+    
 	/*****************************************************************************************************************
 	 * NAVIGATION
 	 ****************************************************************************************************************/
