@@ -33,6 +33,7 @@ import org.cobaltians.cobalt.activities.CobaltActivity;
 import org.cobaltians.cobalt.customviews.BottomBar;
 import org.cobaltians.cobalt.fragments.CobaltFragment;
 import org.cobaltians.cobalt.plugin.CobaltAbstractPlugin;
+import org.cobaltians.cobalt.pubsub.PubSub;
 
 import android.app.Activity;
 import android.content.Context;
@@ -45,6 +46,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.util.TypedValue;
@@ -55,6 +57,7 @@ import java.util.Iterator;
 
 import junit.framework.Assert;
 
+import org.cobaltians.cobalt.pubsub.PubSubInterface;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -83,7 +86,7 @@ public class Cobalt {
      * CONFIGURATION FILE
      **********************************************************************************************/
 
-    private final static String CONF_FILE = "cobalt.conf";
+    public final static String CONF_FILE = "cobalt.json";
     private final static String kControllers = "controllers";
     private final static String kPlugins = "plugins";
     private final static String kAndroid = "android";
@@ -115,7 +118,8 @@ public class Cobalt {
     public final static String kActionEnabled = "enabled";
     public final static String kActionBadge = "badge";
 
-    public final static String kExtras = "extras";
+    public final static String kExtras = "cobalt";
+    public final static String kController = "controller";
     public final static String kPage = "page";
     public final static String kActivity = "activity";
     public final static String kPopAsModal = "popAsModal";
@@ -132,6 +136,7 @@ public class Cobalt {
     // GENERAL
     public final static String kJSAction = "action";
     public final static String kJSCallback = "callback";
+    public final static String kJSCallbackChannel = "callbackChannel";
     public final static String kJSData = "data";
     public final static String kJSMessage = "message";
     public final static String kJSPage = "page";
@@ -150,10 +155,10 @@ public class Cobalt {
     public final static String kJSEvent = "event";
 
     // APP EVENTS
-    public final static String JSEventOnAppStarted = "onAppStarted";
-    public final static String JSEventOnAppBackground = "onAppBackground";
-    public final static String JSEventOnAppForeground = "onAppForeground";
-    public final static String JSEventOnPageShown = "onPageShown";
+    public final static String JSEventOnAppStarted = "cobalt:onAppStarted";
+    public final static String JSEventOnAppBackground = "cobalt:onAppBackground";
+    public final static String JSEventOnAppForeground = "cobalt:onAppForeground";
+    public final static String JSEventOnPageShown = "cobalt:onPageShown";
 
     // INTENT
     public final static String JSTypeIntent = "intent";
@@ -176,15 +181,16 @@ public class Cobalt {
     public final static String kJSClearHistory = "clearHistory";
 
     // BACK BUTTON
-    public final static String JSEventOnBackButtonPressed = "onBackButtonPressed";
-    public final static String JSCallbackOnBackButtonPressed = "onBackButtonPressed";
+    public final static String JSEventOnBackButtonPressed = "cobalt:onBackButtonPressed";
 
     // UI
     public final static String JSTypeUI = "ui";
     public final static String kJSUIControl = "control";
-
+    public final static String JSActionDismiss = "dismiss";
+    
     // ALERT
     public final static String JSControlAlert = "alert";
+    public final static String kJSAlertId = "alertId";
     public final static String kJSAlertTitle = "title";
     public final static String kJSAlertButtons = "buttons";
     public final static String kJSAlertCancelable = "cancelable";
@@ -215,22 +221,34 @@ public class Cobalt {
     public final static String JSActionWebLayerBringToFront = "bringToFront";
     public final static String JSActionWebLayerSendToBack = "sendToBack";
     public final static String kJSWebLayerFadeDuration = "fadeDuration";
-	public final static String JSEventonWebLayerLoading = "onWebLayerLoading";
-    public final static String JSEventonWebLayerLoaded = "onWebLayerLoaded";
-    public final static String JSEventonWebLayerDismissed = "onWebLayerDismissed";
+	public final static String JSEventonWebLayerLoading = "cobalt:onWebLayerLoading";
+    public final static String JSEventonWebLayerLoaded = "cobalt:onWebLayerLoaded";
+    public final static String JSEventonWebLayerLoadFailed = "cobalt:onWebLayerLoadFailed";
+    public final static String JSEventonWebLayerDismissed = "cobalt:onWebLayerDismissed";
 
     // PULL TO REFRESH
-    public final static String JSEventPullToRefresh = "pullToRefresh";
+    public final static String JSControlPullToRefresh = "pullToRefresh";
+    public final static String JSEventPullToRefresh = "cobalt:onPullToRefresh";
     public final static String JSCallbackPullToRefreshDidRefresh = "pullToRefreshDidRefresh";
 
     // INFINITE SCROLL
-    public final static String JSEventInfiniteScroll= "infiniteScroll";
+    public final static String JSControlInfiniteScroll = "infiniteScroll";
+    public final static String JSEventInfiniteScroll= "cobalt:onInfiniteScroll";
     public final static String JSCallbackInfiniteScrollDidRefresh = "infiniteScrollDidRefresh";
 
     //PLUGIN
     public final static String JSTypePlugin = "plugin";
     public final static String kJSPluginName = "name";
+    public final static String kJSPluginClasses = "classes";
+    public final static String kJSPluginAndroid = "android";
 
+    //PUBSUB
+    public final static String JSTypePubsub = "pubsub";
+    public final static String JSActionSubscribe = "subscribe";
+    public final static String JSActionUnsubscribe = "unsubscribe";
+    public final static String JSActionPublish = "publish";
+    public final static String kJSChannel = "channel";
+    
     /**********************************************************************************************
      * MEMBERS
      **********************************************************************************************/
@@ -376,7 +394,7 @@ public class Cobalt {
 
             if (controller != null
                 && controllers.has(controller)) {
-                activity = controllers.getJSONObject(controller).getString(kAndroid);
+                activity = controllers.getJSONObject(controller).optString(kAndroid, null);
                 bars = controllers.getJSONObject(controller).optJSONObject(kBars);
                 enablePullToRefresh = controllers.getJSONObject(controller).optBoolean(kPullToRefresh);
                 enableInfiniteScroll = controllers.getJSONObject(controller).optBoolean(kInfiniteScroll);
@@ -384,7 +402,7 @@ public class Cobalt {
                 backgroundColor = controllers.getJSONObject(controller).optString(kBackgroundColor, BACKGROUND_COLOR_DEFAULT);
             }
             else {
-                activity = controllers.getJSONObject(kDefaultController).getString(kAndroid);
+                activity = controllers.getJSONObject(kDefaultController).optString(kAndroid, null);
                 bars = controllers.getJSONObject(kDefaultController).optJSONObject(kBars);
                 enablePullToRefresh = controllers.getJSONObject(kDefaultController).optBoolean(kPullToRefresh);
                 enableInfiniteScroll = controllers.getJSONObject(kDefaultController).optBoolean(kInfiniteScroll);
@@ -392,8 +410,16 @@ public class Cobalt {
                 backgroundColor = controllers.getJSONObject(kDefaultController).optString(kBackgroundColor, BACKGROUND_COLOR_DEFAULT);
             }
 
-            if (activity.substring(0,1).equals(".")) activity = sContext.getPackageName() + activity;
-
+            if (activity == null)
+            {
+                activity = "org.cobaltians.cobalt.activities.CobaltActivity";
+            }
+            else if (activity.startsWith("."))
+            {
+                activity = sContext.getPackageName() + activity;
+            }
+    
+            bundle.putString(kController, controller);
             bundle.putString(kActivity, activity);
             if (bars != null) bundle.putString(kBars, bars.toString());
             bundle.putBoolean(kPullToRefresh, enablePullToRefresh);
@@ -404,10 +430,9 @@ public class Cobalt {
             return bundle;
         }
         catch (JSONException exception) {
-            if (Cobalt.DEBUG) Log.e(Cobalt.TAG,     TAG + " - getConfigurationForController: check cobalt.conf. Known issues: \n "
+            if (Cobalt.DEBUG) Log.e(Cobalt.TAG,     TAG + " - getConfigurationForController: check cobalt.json. Known issues: \n "
                                                     + "\t - controllers field not found or not a JSONObject \n "
-                                                    + "\t - " + controller + " controller not found and no " + kDefaultController + " controller defined \n "
-                                                    + "\t - " + controller + " or " + kDefaultController + "controller found but no " + kAndroid + "defined \n ");
+                                                    + "\t - " + controller + " controller not found and no " + kDefaultController + " controller defined \n ");
             exception.printStackTrace();
         }
 
@@ -456,7 +481,7 @@ public class Cobalt {
         }
         catch (JSONException exception) {
             if (Cobalt.DEBUG) {
-                Log.w(Cobalt.TAG, TAG + " - getPlugins: plugins field of cobalt.conf not found or not a JSONObject.");
+                Log.w(Cobalt.TAG, TAG + " - getPlugins: plugins field of cobalt.json not found or not a JSONObject.");
                 exception.printStackTrace();
             }
         }
@@ -468,6 +493,37 @@ public class Cobalt {
      * HELPER METHODS
      **********************************************************************************************/
 
+    /**
+     * Broadcasts the specified message to PubSubReceivers which have subscribed to the specified channel.
+     * @param message the message to broadcast to PubSubReceivers via the channel.
+     * @param channel the channel to which broadcast the message.
+     */
+    public static void publishMessage(@Nullable JSONObject message, @NonNull String channel) {
+        PubSub.getInstance().publishMessage(message, channel);
+    }
+
+    /**
+     * Subscribes the specified PubSubInterface to messages sent via the specified channel.
+     * @param channel the channel the PubSubReceiver subscribes.
+     * @param listener the PubSubInterface the PubSubReceiver will have to use to send messages.
+     */
+    public static void subscribeToChannel(@NonNull String channel,
+                                          @NonNull PubSubInterface listener)
+    {
+        PubSub.getInstance().subscribeToChannel(channel, listener);
+    }
+
+    /**
+     * Unsubscribes the specified PubSubInterface from messages sent via the specified channel.
+     * @param channel the channel from which the messages come from.
+     * @param listener the PubSubInterface to unsubscribes from the channel.
+     */
+    public static void unsubscribeFromChannel(@NonNull String channel,
+                                              @NonNull PubSubInterface listener)
+    {
+        PubSub.getInstance().unsubscribeFromChannel(channel, listener);
+    }
+
     private JSONObject getConfiguration() {
         if (sCobaltConfiguration == null) {
             String configuration = readFileFromAssets(mResourcePath + CONF_FILE);
@@ -475,7 +531,7 @@ public class Cobalt {
                 sCobaltConfiguration = new JSONObject(configuration);
             }
             catch (JSONException exception) {
-                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - getConfiguration: check cobalt.conf. File is missing or not at " + ASSETS_PATH + mResourcePath + CONF_FILE);
+                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - getConfiguration: check cobalt.json. File is missing or not at " + ASSETS_PATH + mResourcePath + CONF_FILE);
                 exception.printStackTrace();
                 return new JSONObject();
             }

@@ -48,6 +48,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -62,8 +64,9 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 
+import org.cobaltians.cobalt.pubsub.PubSub;
+import org.cobaltians.cobalt.pubsub.PubSubInterface;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -73,7 +76,9 @@ import org.json.JSONObject;
  * 
  * @author Diane Moebs
  */
-public abstract class CobaltFragment extends Fragment implements IScrollListener, SwipeRefreshLayout.OnRefreshListener {
+public class CobaltFragment extends Fragment implements IScrollListener, SwipeRefreshLayout.OnRefreshListener,
+        PubSubInterface
+{
 
     // TAG
     protected final static String TAG = CobaltFragment.class.getSimpleName();
@@ -99,8 +104,6 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 
 	private boolean mIsInfiniteScrollRefreshing = false;
 
-	private CobaltPluginManager mPluginManager;
-
     private boolean mAllowCommit;
 
 
@@ -112,14 +115,17 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     public void onAttach(Context context) {
         super.onAttach(context);
         mContext = context;
-
+    
+        PubSub.getInstance().subscribeToChannel(Cobalt.JSEventOnAppStarted, this);
+        
         executeFromJSWaitingCalls();
     }
 
     @Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
-        mPluginManager = CobaltPluginManager.getInstance(mContext);
+        
         setRetainInstance(true);
     }
 
@@ -160,7 +166,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 		super.onStart();
 
         mAllowCommit = true;
-
+        
 		addWebView();
 		preloadContent();
 	}
@@ -168,13 +174,14 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     @Override
     public void onResume() {
         super.onResume();
-
-        showPendingAlertDialogs();
-        executeToJSWaitingCalls();
-
+    
         JSONObject data = ((CobaltActivity) mContext).getDataNavigation();
         sendEvent(Cobalt.JSEventOnPageShown, data, null);
         ((CobaltActivity) mContext).setDataNavigation(null);
+    
+        executeToJSWaitingCalls();
+        
+        showPendingAlertDialogs();
     }
 
     @Override
@@ -187,7 +194,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     @Override
 	public void onStop() {
 		super.onStop();
-		
+        
 		// Fragment will rotate or be destroyed, so we don't preload content defined in fragment's arguments again
         mPreloadOnCreate = false;
 		
@@ -210,13 +217,14 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     @Override
 	public void onDestroy() {
         super.onDestroy();
-		
-		mPluginManager.onFragmentDestroyed(mContext, this);
 	}
 
     @Override
     public void onDetach() {
         mContext = null;
+    
+        PubSub.getInstance().unsubscribeFromChannel(Cobalt.JSEventOnAppStarted, this);
+        
         super.onDetach();
     }
 
@@ -415,7 +423,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	 * Sends script to be executed by JavaScript in Web view
 	 * @param jsonObj: JSONObject containing script.
 	 */
-    private void executeScriptInWebView(final JSONObject jsonObj) {
+    private void executeScriptInWebView(final JSONObject jsonObj, boolean executeFirst) {
         if (jsonObj != null) {
             Activity activity = getActivity();
             if (mWebView != null
@@ -432,14 +440,21 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                             script = script.replaceAll("%", "%25");
                         }
 
-                        String url = "javascript:cobalt.execute(" + script + ");";
+                        String url = "javascript:cobalt.private.execute(" + script + ");";
                         mWebView.loadUrl(url);
                     }
                 });
             }
             else {
                 if (Cobalt.DEBUG) Log.i(Cobalt.TAG, TAG + " - executeScriptInWebView: adding message to queue: " + jsonObj);
-                mToJSWaitingCallsQueue.add(jsonObj);
+                if (executeFirst)
+                {
+                    mToJSWaitingCallsQueue.add(0, jsonObj);
+                }
+                else
+                {
+                    mToJSWaitingCallsQueue.add(jsonObj);
+                }
             }
         }
         else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - executeScriptInWebView: jsonObj is null!");
@@ -448,12 +463,12 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     public void executeToJSWaitingCalls() {
         ArrayList<JSONObject> toJSWaitingCallsQueue = new ArrayList<>(mToJSWaitingCallsQueue);
 		int toJSWaitingCallsQueueLength = toJSWaitingCallsQueue.size();
-
+		
         mToJSWaitingCallsQueue.clear();
 
 		for (int i = 0 ; i < toJSWaitingCallsQueueLength ; i++) {
 			if (Cobalt.DEBUG) Log.i(Cobalt.TAG, TAG + " - executeToJSWaitingCalls: execute " + toJSWaitingCallsQueue.get(i).toString());
-			executeScriptInWebView(toJSWaitingCallsQueue.get(i));
+			executeScriptInWebView(toJSWaitingCallsQueue.get(i), false);
 		}
 	}
 
@@ -463,34 +478,11 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 
     /**
      * Calls the Web callback with an object containing response fields
-     * @param callbackId: the Web callback.
-     * @param data: the object containing response fields
-     */
-    public void sendCallback(final String callbackId, final JSONObject data) {
-        if (callbackId != null
-                && callbackId.length() > 0) {
-            try {
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put(Cobalt.kJSType, Cobalt.JSTypeCallBack);
-                jsonObj.put(Cobalt.kJSCallback, callbackId);
-                jsonObj.put(Cobalt.kJSData, data);
-                executeScriptInWebView(jsonObj);
-            }
-            catch (JSONException exception) {
-                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendCallback: JSONException");
-                exception.printStackTrace();
-            }
-        }
-        else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendCallback: callbackId is null or empty!");
-    }
-
-    /**
-     * Calls the Web callback with an object containing response fields
      * @param event: the name of the event.
      * @param data: the object containing response fields
      * @param callbackID: the Web callback.
      */
-    public void sendEvent(final String event, final JSONObject data, final String callbackID) {
+    protected void sendEvent(final String event, final JSONObject data, final String callbackID) {
         if (event != null
                 && event.length() > 0) {
             try {
@@ -499,7 +491,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                 jsonObj.put(Cobalt.kJSEvent, event);
                 jsonObj.put(Cobalt.kJSData, data);
                 jsonObj.put(Cobalt.kJSCallback, callbackID);
-                executeScriptInWebView(jsonObj);
+                executeScriptInWebView(jsonObj, Cobalt.JSEventOnPageShown.equals(event));
             }
             catch (JSONException exception) {
                 if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendEvent: JSONException");
@@ -511,40 +503,15 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 
     /**
      * Calls the Web callback with an object containing response fields
-     * @param plugin: the name of the plugin.
-     * @param data: the object containing response fields
-     * @param callbackID: the Web callback.
-     */
-    public void sendPlugin(final String plugin, final JSONObject data, final String callbackID) {
-        if (plugin != null
-            && plugin.length() > 0) {
-            try {
-                JSONObject jsonObj = new JSONObject();
-                jsonObj.put(Cobalt.kJSType, Cobalt.JSTypePlugin);
-                jsonObj.put(Cobalt.kJSPluginName, plugin);
-                jsonObj.put(Cobalt.kJSData, data);
-                jsonObj.put(Cobalt.kJSCallback, callbackID);
-                executeScriptInWebView(jsonObj);
-            }
-            catch (JSONException exception) {
-                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendPlugin: JSONException");
-                exception.printStackTrace();
-            }
-        }
-        else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendPlugin: plugin is null or empty!");
-    }
-
-    /**
-     * Calls the Web callback with an object containing response fields
      * @param message: the object containing response fields
      */
     public void sendMessage(final JSONObject message) {
         if (message != null) {
-            executeScriptInWebView(message);
+            executeScriptInWebView(message, false);
         }
         else if (Cobalt.DEBUG) Log.e(Cobalt.TAG, TAG + " - sendMessage: message is null !");
     }
-
+    
 	/****************************************************************************************
 	 * MESSAGE HANDLING
 	 ***************************************************************************************/
@@ -573,49 +540,13 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
             String type = jsonObj.optString(Cobalt.kJSType, null);
 			if (type != null) {
                 final JSONObject data;
-                final String callback;
                 String action;
 
                 switch (type) {
-                    // CALLBACK
-                    case Cobalt.JSTypeCallBack:
-                        try {
-                            String callbackId = jsonObj.getString(Cobalt.kJSCallback);
-                            data = jsonObj.optJSONObject(Cobalt.kJSData);
-                            messageHandled = handleCallback(callbackId, data);
-                        }
-                        catch(JSONException exception) {
-                            if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - onCobaltMessage: " +
-                                            Cobalt.kJSCallback + " field is missing.\n" + message);
-                            exception.printStackTrace();
-                        }
-                        break;
                     // COBALT IS READY
                     case Cobalt.JSTypeCobaltIsReady:
                         onCobaltIsReady(jsonObj.optString(Cobalt.kJSVersion, null));
                         messageHandled = true;
-                        break;
-                    // EVENT
-                    case Cobalt.JSTypeEvent:
-                        try {
-                            final String event = jsonObj.getString(Cobalt.kJSEvent);
-                            data = jsonObj.optJSONObject(Cobalt.kJSData);
-                            callback = jsonObj.optString(Cobalt.kJSCallback, null);
-
-                            ((Activity) mContext).runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    onUnhandledEvent(event, data, callback);
-                                }
-                            });
-
-                            messageHandled = true;
-                        }
-                        catch(JSONException exception) {
-                            if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - onCobaltMessage: " +
-                                    Cobalt.kJSEvent + " field is missing.\n" + message);
-                            exception.printStackTrace();
-                        }
                         break;
                     // INTENT
                     case Cobalt.JSTypeIntent:
@@ -696,8 +627,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                                 case Cobalt.JSActionNavigationModal:
                                     try {
                                         data = jsonObj.getJSONObject(Cobalt.kJSData);
-                                        String callbackId = jsonObj.optString(Cobalt.kJSCallback, null);
-                                        presentModal(data, callbackId);
+                                        presentModal(data);
                                         messageHandled = true;
                                     }
                                     catch(JSONException exception) {
@@ -752,15 +682,44 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                         break;
                     // PLUGIN
                     case Cobalt.JSTypePlugin:
-                        messageHandled = mPluginManager.onMessage(mContext, this, jsonObj);
+                        messageHandled = CobaltPluginManager.onMessage(mContext, this, jsonObj);
+                        break;
+                    // PUBSUB
+                    case Cobalt.JSTypePubsub:
+                        try
+                        {
+                            String pubsubAction = jsonObj.getString(Cobalt.kJSAction);
+                            String pubsubChannel = jsonObj.getString(Cobalt.kJSChannel);
+                            
+                            switch(pubsubAction)
+                            {
+                                case Cobalt.JSActionSubscribe:
+                                    PubSub.getInstance().subscribeWebToChannel(this,
+                                                                               pubsubChannel);
+                                    break;
+                                case Cobalt.JSActionUnsubscribe:
+                                    PubSub.getInstance().unsubscribeWebFromChannel(this,
+                                                                                   pubsubChannel);
+                                    break;
+                                case Cobalt.JSActionPublish:
+                                    JSONObject pubsubMessage = jsonObj.getJSONObject(Cobalt.kJSMessage);
+                                    PubSub.getInstance().publishMessage(pubsubMessage, pubsubChannel);
+                                    break;
+                            }
+                            messageHandled = true;
+                        }
+                        catch(JSONException exception)
+                        {
+                            Log.e(TAG, "onCobaltMessage: action, channel and/or message fields are missing or not a string (message: + "  + message + ")");
+                            exception.printStackTrace();
+                        }
                         break;
                     // UI
                     case Cobalt.JSTypeUI:
                         try {
                             String control = jsonObj.getString(Cobalt.kJSUIControl);
                             data = jsonObj.getJSONObject(Cobalt.kJSData);
-                            callback = jsonObj.optString(Cobalt.kJSCallback, null);
-                            messageHandled = handleUi(control, data, callback);
+                            messageHandled = handleUi(control, data);
                         }
                         catch(JSONException exception) {
                             if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - onCobaltMessage: " +
@@ -829,13 +788,10 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 			}
 
             // UNHANDLED MESSAGE
-            if (! messageHandled) {
-                ((Activity) mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onUnhandledMessage(jsonObj);
-                    }
-                });
+            if (! messageHandled &&
+                Cobalt.DEBUG)
+            {
+                Log.e(Cobalt.TAG, TAG + " - onCobaltMessage: message not handled.\n" + message);
             }
 		} 
 		catch (JSONException exception) {
@@ -888,57 +844,13 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 
     protected void onReady() { }
 
-	private boolean handleCallback(final String callback, final JSONObject data) {
-        switch(callback) {
-            case Cobalt.JSCallbackOnBackButtonPressed:
-                try {
-                    onBackPressed(data.getBoolean(Cobalt.kJSValue));
-                    return true;
-                }
-                catch (JSONException exception) {
-                    if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - handleCallback " +
-                            Cobalt.JSCallbackOnBackButtonPressed + ": missing value field.");
-                    exception.printStackTrace();
-                    return false;
-                }
-            case Cobalt.JSCallbackPullToRefreshDidRefresh:
-                ((Activity)mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onPullToRefreshDidRefresh();
-                    }
-                });
-                return true;
-            case Cobalt.JSCallbackInfiniteScrollDidRefresh:
-                ((Activity)mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onInfiniteScrollDidRefresh();
-                    }
-                });
-                return true;
-            default:
-                ((Activity) mContext).runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onUnhandledCallback(callback, data);
-                    }
-                });
-                return true;
-        }
-	}
-	
-	protected abstract boolean onUnhandledCallback(String callback, JSONObject data);
-	
-	protected abstract boolean onUnhandledEvent(String event, JSONObject data, String callback);
-
-	private boolean handleUi(String control, JSONObject data, String callback) {
+	private boolean handleUi(String control, JSONObject data) {
         boolean messageHandled = false;
 
         switch (control) {
             // ALERT
             case Cobalt.JSControlAlert:
-                showAlertDialog(data, callback);
+                showAlertDialog(data);
                 messageHandled = true;
                 break;
             // TOAST
@@ -961,8 +873,51 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                     exception.printStackTrace();
                 }
                 break;
+            // PULL TO REFRESH
+            case Cobalt.JSControlPullToRefresh:
+                try {
+                    final String action = data.getString(Cobalt.kJSAction);
+                    if (Cobalt.JSActionDismiss.equals(action))
+                    {
+                        ((Activity) mContext).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                onPullToRefreshDidRefresh();
+                            }
+                        });
+                    }
+                    
+                    messageHandled = true;
+                }
+                catch (JSONException exception) {
+                    if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - handleUi: " + Cobalt.kJSAction +
+                                                        " field is missing.\n" + data);
+                    exception.printStackTrace();
+                }
+                break;
+            // INFINITE SCROLL
+            case Cobalt.JSControlInfiniteScroll:
+                try {
+                    final String action = data.getString(Cobalt.kJSAction);
+                    if (Cobalt.JSActionDismiss.equals(action))
+                    {
+                        ((Activity) mContext).runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                onInfiniteScrollDidRefresh();
+                            }
+                        });
+                    }
+            
+                    messageHandled = true;
+                }
+                catch (JSONException exception) {
+                    if (Cobalt.DEBUG) Log.w(Cobalt.TAG, TAG + " - handleUi: " + Cobalt.kJSAction +
+                                                        " field is missing.\n" + data);
+                    exception.printStackTrace();
+                }
+                break;
             // BARS
-
             case Cobalt.JSControlBars:
                 try {
                     String action = data.getString(Cobalt.kJSAction);
@@ -1137,9 +1092,20 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
             }
         });
     }
-
-	protected abstract boolean onUnhandledMessage(JSONObject message);
-	
+    
+    /***********************************************************************************************
+     * PUBSUB
+     **********************************************************************************************/
+    
+    @Override
+    public void onMessageReceived(@Nullable JSONObject message, @NonNull String channel)
+    {
+        if (Cobalt.JSEventOnAppStarted.equals(channel))
+        {
+            sendEvent(Cobalt.JSEventOnAppStarted, null, null);
+        }
+    }
+    
 	/*****************************************************************************************************************
 	 * NAVIGATION
 	 ****************************************************************************************************************/
@@ -1194,7 +1160,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
         ((CobaltActivity) mContext).popTo(controller, page, data);
     }
 	
-	private void presentModal(JSONObject data, String callBackID) {
+	private void presentModal(JSONObject data) {
         try {
             String page = data.getString(Cobalt.kJSPage);
             String controller = data.optString(Cobalt.kJSController, null);
@@ -1211,24 +1177,30 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                 if (dataForModal != null) {
                     intent.putExtra(Cobalt.kJSData, dataForModal.toString());
                 }
-
+    
+                // Sends callback to store current activity & HTML page for dismiss
+                try {
+                    JSONObject messageData = new JSONObject();
+                    messageData.put(Cobalt.kJSPage, getPage());
+                    messageData.put(Cobalt.kJSController, mContext.getClass().getName());
+        
+                    JSONObject message = new JSONObject();
+                    message.put(Cobalt.kJSType, Cobalt.JSTypeNavigation);
+                    message.put(Cobalt.kJSAction, Cobalt.JSActionNavigationModal);
+                    message.put(Cobalt.kJSData, messageData);
+        
+                    sendMessage(message);
+                }
+                catch (JSONException exception) {
+                    exception.printStackTrace();
+                }
+                
                 ((Activity) mContext).runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mContext.startActivity(intent);
                     }
                 });
-
-                // Sends callback to store current activity & HTML page for dismiss
-                try {
-                    JSONObject callbackData = new JSONObject();
-                    callbackData.put(Cobalt.kJSPage, getPage());
-                    callbackData.put(Cobalt.kJSController, mContext.getClass().getName());
-                    sendCallback(callBackID, callbackData);
-                }
-                catch (JSONException exception) {
-                    exception.printStackTrace();
-                }
             }
             else if (Cobalt.DEBUG) {
                 Log.e(Cobalt.TAG,  TAG + " - presentModal: unable to present modal " + controller + " controller.");
@@ -1325,7 +1297,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	 * This method should NOT be overridden in subclasses.
 	 */
 	public void askWebViewForBackPermission() {
-		sendEvent(Cobalt.JSEventOnBackButtonPressed, null, Cobalt.JSCallbackOnBackButtonPressed);
+		sendEvent(Cobalt.JSEventOnBackButtonPressed, null, null);
 	}
 	
 	/**
@@ -1479,8 +1451,9 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	 * ALERT DIALOG
 	 *****************************************************************************************************************/
 
-	private void showAlertDialog(JSONObject data, final String callback) {		
+	private void showAlertDialog(JSONObject data) {
 		try {
+            final long identifier = data.getLong(Cobalt.kJSAlertId);
 			final String title = data.optString(Cobalt.kJSAlertTitle);
 			final String message = data.optString(Cobalt.kJSMessage);
 			final boolean cancelable = data.optBoolean(Cobalt.kJSAlertCancelable, false);
@@ -1500,16 +1473,21 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                             alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "OK", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if (callback != null) {
-                                        try {
-                                            JSONObject data = new JSONObject();
-                                            data.put(Cobalt.kJSAlertButtonIndex, 0);
-                                            sendCallback(callback, data);
-                                        }
-                                        catch (JSONException exception) {
-                                            if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
-                                            exception.printStackTrace();
-                                        }
+                                    try {
+                                        JSONObject data = new JSONObject();
+                                        data.put(Cobalt.kJSAlertId, identifier);
+                                        data.put(Cobalt.kJSAlertButtonIndex, 0);
+    
+                                        JSONObject message = new JSONObject();
+                                        message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
+                                        message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
+                                        message.put(Cobalt.kJSData, data);
+    
+                                        sendMessage(message);
+                                    }
+                                    catch (JSONException exception) {
+                                        if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
+                                        exception.printStackTrace();
                                     }
                                 }
                             });
@@ -1535,30 +1513,35 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
                                 alertDialog.setButton(buttonId, buttons.getString(i), new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        if (callback != null) {
-                                            int buttonIndex;
-                                            switch (which) {
-                                                case DialogInterface.BUTTON_NEGATIVE:
-                                                default:
-                                                    buttonIndex = 0;
-                                                    break;
-                                                case DialogInterface.BUTTON_NEUTRAL:
-                                                    buttonIndex = 1;
-                                                    break;
-                                                case DialogInterface.BUTTON_POSITIVE:
-                                                    buttonIndex = 2;
-                                                    break;
-                                            }
+                                        int buttonIndex;
+                                        switch (which) {
+                                            case DialogInterface.BUTTON_NEGATIVE:
+                                            default:
+                                                buttonIndex = 0;
+                                                break;
+                                            case DialogInterface.BUTTON_NEUTRAL:
+                                                buttonIndex = 1;
+                                                break;
+                                            case DialogInterface.BUTTON_POSITIVE:
+                                                buttonIndex = 2;
+                                                break;
+                                        }
 
-                                            try {
-                                                JSONObject data = new JSONObject();
-                                                data.put(Cobalt.kJSAlertButtonIndex, buttonIndex);
-                                                sendCallback(callback, data);
-                                            }
-                                            catch (JSONException exception) {
-                                                if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
-                                                exception.printStackTrace();
-                                            }
+                                        try {
+                                            JSONObject data = new JSONObject();
+                                            data.put(Cobalt.kJSAlertId, identifier);
+                                            data.put(Cobalt.kJSAlertButtonIndex, buttonIndex);
+    
+                                            JSONObject message = new JSONObject();
+                                            message.put(Cobalt.kJSType, Cobalt.JSTypeUI);
+                                            message.put(Cobalt.kJSUIControl, Cobalt.JSControlAlert);
+                                            message.put(Cobalt.kJSData, data);
+                                            
+                                            sendMessage(message);
+                                        }
+                                        catch (JSONException exception) {
+                                            if (Cobalt.DEBUG) Log.e(Cobalt.TAG, "Alert - onClick: JSONException");
+                                            exception.printStackTrace();
                                         }
                                     }
                                 });
@@ -1639,7 +1622,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
     }
 
     private void refreshWebView() {
-        sendEvent(Cobalt.JSEventPullToRefresh, null, Cobalt.JSCallbackPullToRefreshDidRefresh);
+        sendEvent(Cobalt.JSEventPullToRefresh, null, null);
 	}
 	
 	private void onPullToRefreshDidRefresh() {
@@ -1670,7 +1653,7 @@ public abstract class CobaltFragment extends Fragment implements IScrollListener
 	}
 
 	private void infiniteScrollRefresh() {
-        sendEvent(Cobalt.JSEventInfiniteScroll, null, Cobalt.JSCallbackInfiniteScrollDidRefresh);
+        sendEvent(Cobalt.JSEventInfiniteScroll, null, null);
         mIsInfiniteScrollRefreshing = true;
 	}
 	

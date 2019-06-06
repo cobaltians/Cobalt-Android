@@ -32,34 +32,49 @@ package org.cobaltians.cobalt.plugin;
 import org.cobaltians.cobalt.fragments.CobaltFragment;
 
 import android.app.Activity;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
-public final class CobaltPluginWebContainer {
+import java.lang.ref.WeakReference;
 
-	/**************************************
+public final class CobaltPluginWebContainer
+{
+	/***********************************************************************************************
+	 *
      * MEMBERS
-     **************************************/
+	 *
+     **********************************************************************************************/
 	
-	private final Activity mActivity;
-	private final CobaltFragment mFragment;
+	private final WeakReference<Activity> mActivity;
+	private final WeakReference<CobaltFragment> mFragment;
 	
-	/****************************************************************************
+	/***********************************************************************************************
+	 *
      * CONSTRUCTORS
-     ****************************************************************************/
+	 *
+     **********************************************************************************************/
 	
-	public CobaltPluginWebContainer(Activity activity, CobaltFragment fragment) {
-		mActivity = activity;
-		mFragment = fragment;
+	public CobaltPluginWebContainer(@NonNull Activity activity, @NonNull CobaltFragment fragment)
+	{
+		mActivity = new WeakReference<>(activity);
+		mFragment = new WeakReference<>(fragment);
 	}
 
-	/************************************
+	/***********************************************************************************************
+	 *
      * GETTERS
-     ************************************/
+	 *
+     **********************************************************************************************/
 	
-	public Activity getActivity() {
-		return mActivity;
+	@Nullable
+	public Activity getActivity()
+	{
+		return mActivity.get();
 	}
-
-	public CobaltFragment getFragment() {
-		return mFragment;
+	
+	@Nullable
+	public CobaltFragment getFragment()
+	{
+		return mFragment.get();
 	}
 }

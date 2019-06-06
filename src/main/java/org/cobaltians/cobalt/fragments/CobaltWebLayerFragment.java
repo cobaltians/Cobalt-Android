@@ -32,10 +32,14 @@ package org.cobaltians.cobalt.fragments;
 import org.cobaltians.cobalt.Cobalt;
 
 import android.graphics.Bitmap;
-import android.graphics.Color;
+import android.net.http.SslError;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -112,6 +116,69 @@ public class CobaltWebLayerFragment extends CobaltFragment {
 
 				executeToJSWaitingCalls();
 			}
+			
+			@Override
+			public void onReceivedError(WebView view, int errorCode, String description,
+					String failingUrl)
+			{
+				super.onReceivedError(view, errorCode, description, failingUrl);
+				
+				if (mRootFragment != null)
+				{
+					sendEvent(Cobalt.JSEventonWebLayerLoadFailed, null, null);
+				}
+				else if (Cobalt.DEBUG)
+				{
+					Log.e(Cobalt.TAG, TAG + " - onReceivedError: no root fragment found");
+				}
+			}
+			
+			@Override
+			public void onReceivedError(WebView view, WebResourceRequest request,
+					WebResourceError error)
+			{
+				super.onReceivedError(view, request, error);
+				
+				if (mRootFragment != null)
+				{
+					sendEvent(Cobalt.JSEventonWebLayerLoadFailed, null, null);
+				}
+				else if (Cobalt.DEBUG)
+				{
+					Log.e(Cobalt.TAG, TAG + " - onReceivedError: no root fragment found");
+				}
+			}
+			
+			@Override
+			public void onReceivedHttpError(WebView view, WebResourceRequest request,
+					WebResourceResponse errorResponse)
+			{
+				super.onReceivedHttpError(view, request, errorResponse);
+				
+				if (mRootFragment != null)
+				{
+					sendEvent(Cobalt.JSEventonWebLayerLoadFailed, null, null);
+				}
+				else if (Cobalt.DEBUG)
+				{
+					Log.e(Cobalt.TAG, TAG + " - onReceivedHttpError: no root fragment found");
+				}
+			}
+			
+			@Override
+			public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error)
+			{
+				super.onReceivedSslError(view, handler, error);
+				
+				if (mRootFragment != null)
+				{
+					sendEvent(Cobalt.JSEventonWebLayerLoadFailed, null, null);
+				}
+				else if (Cobalt.DEBUG)
+				{
+					Log.e(Cobalt.TAG, TAG + " - onReceivedSslError: no root fragment found");
+				}
+			}
 		};
 
 		mWebView.setWebViewClient(webViewClient);
@@ -122,21 +189,6 @@ public class CobaltWebLayerFragment extends CobaltFragment {
 	 * COBALT
 	 *
 	 **********************************************************************************************/
-
-	@Override
-	protected boolean onUnhandledCallback(String name, JSONObject data) {
-		return false;		
-	}
-
-	@Override
-	protected boolean onUnhandledEvent(String name, JSONObject data, String callback) {
-		return false;
-	}
-	
-	@Override
-	protected boolean onUnhandledMessage(final JSONObject message) {
-        return false;
-    }
 	
 	@Override
 	protected void onBackPressed(boolean allowedToBack) {

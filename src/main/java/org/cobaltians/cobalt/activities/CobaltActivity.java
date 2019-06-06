@@ -60,6 +60,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.cobaltians.cobalt.pubsub.PubSub;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,7 +69,7 @@ import org.json.JSONObject;
  * {@link Activity} containing a {@link CobaltFragment}.
  * @author Diane
  */
-public abstract class CobaltActivity extends AppCompatActivity implements ActionViewMenuItemListener {
+public class CobaltActivity extends AppCompatActivity implements ActionViewMenuItemListener {
 
     protected static final String TAG = CobaltActivity.class.getSimpleName();
 
@@ -108,8 +109,8 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
         }
         Bundle extras = bundle.getBundle(Cobalt.kExtras);
         if (extras == null) {
-            extras = Cobalt.getInstance(this.getApplicationContext()).getConfigurationForController(getInitController());
-            extras.putString(Cobalt.kPage, getInitPage());
+            extras = Cobalt.getInstance(this.getApplicationContext()).getConfigurationForController(getController());
+            extras.putString(Cobalt.kPage, getPage());
             bundle.putBundle(Cobalt.kExtras, extras);
         }
 
@@ -129,7 +130,10 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
             mMenuListener = fragment;
 
             if (fragment != null) {
-                fragment.setArguments(extras);
+                if (fragment.getArguments() == null)
+                {
+                    fragment.setArguments(extras);
+                }
                 mAnimatedTransition = bundle.getBoolean(Cobalt.kJSAnimated, true);
 
                 if (mAnimatedTransition) {
@@ -185,27 +189,27 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
         Cobalt.getInstance(getApplicationContext()).onActivityStarted(this);
     }
 
-    public void onAppStarted() {
-        Fragment fragment = getSupportFragmentManager().findFragmentById(getFragmentContainerId());
-        if (fragment != null
-            && CobaltFragment.class.isAssignableFrom(fragment.getClass())) {
-            ((CobaltFragment) fragment).sendEvent(Cobalt.JSEventOnAppStarted, null, null);
-        }
-        else if (Cobalt.DEBUG) Log.i(Cobalt.TAG,    TAG + " - onAppStarted: no fragment container found \n"
-                                                    + " or fragment found is not an instance of CobaltFragment. \n"
-                                                    + "Drop onAppStarted event.");
+    public void onAppStarted()
+    {
+        PubSub.getInstance().publishMessage(null, Cobalt.JSEventOnAppStarted);
     }
 
-    public void onAppForeground() {
+    public void onAppForeground()
+    {
         Fragment fragment = getSupportFragmentManager().findFragmentById(getFragmentContainerId());
         if (fragment != null
-            && CobaltFragment.class.isAssignableFrom(fragment.getClass())) {
+            && CobaltFragment.class.isAssignableFrom(fragment.getClass()))
+        {
             ((CobaltFragment) fragment).executeToJSWaitingCalls();
-            ((CobaltFragment) fragment).sendEvent(Cobalt.JSEventOnAppForeground, null, null);
         }
-        else if (Cobalt.DEBUG) Log.i(Cobalt.TAG,    TAG + " - onAppForeground: no fragment container found \n"
-                                                    + " or fragment found is not an instance of CobaltFragment. \n"
-                                                    + "Drop onAppForeground event.");
+        else if (Cobalt.DEBUG)
+        {
+            Log.i(Cobalt.TAG, TAG + " - onAppForeground: no fragment container found \n"
+                              + " or fragment found is not an instance of CobaltFragment. \n"
+                              + "Drop executing waiting calls.");
+        }
+    
+        PubSub.getInstance().publishMessage(null, Cobalt.JSEventOnAppForeground);
     }
 
     @Override
@@ -228,15 +232,9 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
         Cobalt.getInstance(getApplicationContext()).onActivityStopped(this);
     }
 
-    public void onAppBackground() {
-        Fragment fragment = getSupportFragmentManager().findFragmentById(getFragmentContainerId());
-        if (fragment != null
-            && CobaltFragment.class.isAssignableFrom(fragment.getClass())) {
-            ((CobaltFragment) fragment).sendEvent(Cobalt.JSEventOnAppBackground, null, null);
-        }
-        else if (Cobalt.DEBUG) Log.i(Cobalt.TAG,    TAG + " - onAppBackground: no fragment container found \n"
-                                                    + " or fragment found is not an instance of CobaltFragment. \n"
-                                                    + "Drop onAppBackground event.");
+    public void onAppBackground()
+    {
+        PubSub.getInstance().publishMessage(null, Cobalt.JSEventOnAppBackground);
     }
 
     @Override
@@ -245,12 +243,36 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
 
         sActivitiesArrayList.remove(this);
     }
-
-    public String getInitController() {
+    
+    @Nullable
+    public String getController()
+    {
+	    Bundle bundle = getIntent().getExtras();
+	    if (bundle != null)
+	    {
+	        Bundle extras = bundle.getBundle(Cobalt.kExtras);
+	        if (extras != null)
+	        {
+	            return extras.getString(Cobalt.kController);
+	        }
+	    }
+	    
         return null;
     }
-
-    public String getInitPage() {
+    
+    @Nullable
+    public String getPage()
+    {
+	    Bundle bundle = getIntent().getExtras();
+	    if (bundle != null)
+	    {
+	        Bundle extras = bundle.getBundle(Cobalt.kExtras);
+	        if (extras != null)
+	        {
+	            return extras.getString(Cobalt.kPage);
+	        }
+	    }
+	    
         return null;
     }
 
@@ -270,7 +292,7 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
         }
         Bundle extras = bundle.getBundle(Cobalt.kExtras);
         if (extras == null) {
-            extras = Cobalt.getInstance(getApplicationContext()).getConfigurationForController(getInitController());
+            extras = Cobalt.getInstance(getApplicationContext()).getConfigurationForController(getController());
         }
         if (extras.containsKey(Cobalt.kBars)) {
             try {
@@ -333,7 +355,10 @@ public abstract class CobaltActivity extends AppCompatActivity implements Action
 	 * This method should be overridden in subclasses.
 	 * @return a new instance of the fragment contained.
 	 */
-	protected abstract CobaltFragment getFragment();
+	protected CobaltFragment getFragment()
+    {
+	    return new CobaltFragment();
+    }
 
 	protected int getLayoutToInflate() {
 		return R.layout.activity_cobalt;

@@ -19,6 +19,7 @@ android {
 }
 
 dependencies {
+    api "com.android.support:exifinterface:$project.ext.androidSupportVersion"
     api "com.android.support:appcompat-v7:$project.ext.androidSupportVersion"
     api "com.android.support:design:$project.ext.androidSupportVersion"
     api 'junit:junit:4.12'

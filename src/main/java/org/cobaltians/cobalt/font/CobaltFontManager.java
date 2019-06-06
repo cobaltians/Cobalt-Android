@@ -54,11 +54,10 @@ import org.cobaltians.cobalt.Cobalt;
 public class CobaltFontManager {
 
     /**
-     * the fonts key in cobalt.conf
+     * the fonts key in cobalt.json
      */
     private static final String kFonts = "fonts";
     private static final  String kAndroid = "android";
-    private static final  String CONF_FILE = "cobalt.conf";
     private static Context mContext;
     // TAG
     public static final String TAG = CobaltFontManager.class.getSimpleName();
@@ -152,7 +151,7 @@ public class CobaltFontManager {
         }
         catch (JSONException e) {
             if (Cobalt.DEBUG) {
-                Log.w(TAG, TAG + " - getFonts: fonts field of cobalt.conf not found or not a JSONObject.");
+                Log.w(TAG, TAG + " - getFonts: fonts field of cobalt.json not found or not a JSONObject.");
                 e.printStackTrace();
             }
         }
@@ -166,13 +165,13 @@ public class CobaltFontManager {
     // TODO: remove
     private static JSONObject getConfiguration() {
         String mResourcePath = Cobalt.getInstance(mContext).getResourcePathFromAsset();
-        String configuration = readFileFromAssets( mResourcePath + CONF_FILE);
+        String configuration = readFileFromAssets( mResourcePath + Cobalt.CONF_FILE);
 
         try {
             return new JSONObject(configuration);
         }
         catch (JSONException exception) {
-            if (Cobalt.DEBUG) Log.e(TAG, TAG + " - getConfiguration: check cobalt.conf. File is missing or not at " + mResourcePath + CONF_FILE);
+            if (Cobalt.DEBUG) Log.e(TAG, TAG + " - getConfiguration: check cobalt.json. File is missing or not at " + mResourcePath + Cobalt.CONF_FILE);
             exception.printStackTrace();
         }
 
