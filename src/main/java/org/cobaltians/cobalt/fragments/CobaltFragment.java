@@ -29,6 +29,7 @@
 
 package org.cobaltians.cobalt.fragments;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.cobaltians.cobalt.Cobalt;
 import org.cobaltians.cobalt.R;
 import org.cobaltians.cobalt.activities.CobaltActivity;
@@ -102,6 +103,8 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
 	private boolean mPreloadOnCreate = true;
 	private boolean mCobaltIsReady = false;
 
+	protected String mFragmentIdentifier;
+
 	private boolean mIsInfiniteScrollRefreshing = false;
 
     private boolean mAllowCommit;
@@ -166,7 +169,8 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
 		super.onStart();
 
         mAllowCommit = true;
-        
+        mFragmentIdentifier = RandomStringUtils.randomAlphanumeric(20).toUpperCase();
+
 		addWebView();
 		preloadContent();
 	}
@@ -176,6 +180,14 @@ public class CobaltFragment extends Fragment implements IScrollListener, SwipeRe
         super.onResume();
     
         JSONObject data = ((CobaltActivity) mContext).getDataNavigation();
+        if (data == null) {
+            data = new JSONObject();
+        }
+        try {
+            data.put("viewId", mFragmentIdentifier);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         sendEvent(Cobalt.JSEventOnPageShown, data, null);
         ((CobaltActivity) mContext).setDataNavigation(null);
     
