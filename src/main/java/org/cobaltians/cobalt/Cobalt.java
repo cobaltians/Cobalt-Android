@@ -30,7 +30,6 @@
 package org.cobaltians.cobalt;
 
 import org.cobaltians.cobalt.activities.CobaltActivity;
-import org.cobaltians.cobalt.customviews.BottomBar;
 import org.cobaltians.cobalt.fragments.CobaltFragment;
 import org.cobaltians.cobalt.plugin.CobaltAbstractPlugin;
 
@@ -43,9 +42,9 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.AttrRes;
-import android.support.annotation.NonNull;
-import android.support.v7.app.ActionBar;
+import androidx.annotation.AttrRes;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import android.util.Log;
 import android.util.TypedValue;
 
@@ -516,7 +515,7 @@ public class Cobalt {
      *             succeeded, else the color int corresponding to material grey 900 (0xFF212121).
      */
     public int getThemedBarBackgroundColor(@NonNull CobaltActivity activity) {
-        return getThemedColorValue(activity.getTheme(), android.support.v7.appcompat.R.attr.colorPrimary, BAR_BACKGROUND_COLOR_DEFAULT_VALUE);
+        return getThemedColorValue(activity.getTheme(), androidx.appcompat.R.attr.colorPrimary, BAR_BACKGROUND_COLOR_DEFAULT_VALUE);
     }
 
     // TODO: differentiate in overflow or not?
@@ -557,7 +556,7 @@ public class Cobalt {
             }
         }
         else {
-            return getThemedColorValue(activity.getTheme(), android.support.v7.appcompat.R.attr.colorControlNormal, BAR_ICON_COLOR_DEFAULT_VALUE);
+            return getThemedColorValue(activity.getTheme(), androidx.appcompat.R.attr.colorControlNormal, BAR_ICON_COLOR_DEFAULT_VALUE);
         }
 
         return BAR_ICON_COLOR_DEFAULT_VALUE;

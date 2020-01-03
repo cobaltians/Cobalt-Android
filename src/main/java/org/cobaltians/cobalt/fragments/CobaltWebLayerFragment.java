@@ -32,8 +32,7 @@ package org.cobaltians.cobalt.fragments;
 import org.cobaltians.cobalt.Cobalt;
 
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.support.v4.app.FragmentTransaction;
+import androidx.fragment.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
