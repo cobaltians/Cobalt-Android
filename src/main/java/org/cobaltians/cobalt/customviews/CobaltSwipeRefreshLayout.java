@@ -3,10 +3,11 @@ package org.cobaltians.cobalt.customviews;
 import org.cobaltians.cobalt.Cobalt;
 
 import android.content.Context;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 /**
  * Created by sebastien on 31/07/2014.

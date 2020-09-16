@@ -33,7 +33,6 @@ import org.cobaltians.cobalt.Cobalt;
 
 import android.graphics.Bitmap;
 import android.net.http.SslError;
-import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.webkit.SslErrorHandler;
@@ -42,6 +41,8 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
+import androidx.fragment.app.FragmentTransaction;
 
 import org.cobaltians.cobalt.activities.CobaltActivity;
 import org.json.JSONException;

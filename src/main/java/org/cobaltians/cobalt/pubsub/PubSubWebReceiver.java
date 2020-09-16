@@ -29,10 +29,10 @@
 
 package org.cobaltians.cobalt.pubsub;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.util.SimpleArrayMap;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.cobaltians.cobalt.Cobalt;
 import org.cobaltians.cobalt.fragments.CobaltFragment;
@@ -40,7 +40,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 
 /**
  * An object allowing a WebView contained in a CobaltFragment

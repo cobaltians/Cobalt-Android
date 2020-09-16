@@ -49,13 +49,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.NavUtils;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.*;
 import android.webkit.JavascriptInterface;
@@ -63,6 +56,14 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.NavUtils;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 
@@ -77,10 +78,9 @@ import org.json.JSONObject;
  * 
  * @author Diane Moebs
  */
-public class CobaltFragment extends Fragment implements IScrollListener, SwipeRefreshLayout.OnRefreshListener,
-        PubSubInterface
+public class CobaltFragment extends Fragment implements IScrollListener,
+        SwipeRefreshLayout.OnRefreshListener, PubSubInterface
 {
-
     // TAG
     protected final static String TAG = CobaltFragment.class.getSimpleName();
 	

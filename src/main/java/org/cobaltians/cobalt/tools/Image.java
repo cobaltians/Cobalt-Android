@@ -9,12 +9,14 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.media.ExifInterface;
-import android.support.v4.content.FileProvider;
+
 import android.util.Base64;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
+import androidx.exifinterface.media.ExifInterface;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -333,7 +335,8 @@ public final class Image implements Parcelable {
      * @param bitmap The input bitmap
      * @param degrees The rotation angle
      */
-    private @NonNull Bitmap rotateBitmap(@NonNull Bitmap bitmap, int degrees) {
+    @NonNull
+    private Bitmap rotateBitmap(@NonNull Bitmap bitmap, int degrees) {
         if (degrees != 0) {
             int width = bitmap.getWidth();
             int height = bitmap.getHeight();

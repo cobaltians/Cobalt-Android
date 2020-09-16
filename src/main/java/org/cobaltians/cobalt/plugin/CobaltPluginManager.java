@@ -34,8 +34,9 @@ import org.cobaltians.cobalt.fragments.CobaltFragment;
 
 import android.app.Activity;
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,7 +61,7 @@ public final class CobaltPluginManager
      **********************************************************************************************/
 	
 	public static boolean onMessage(@NonNull Context context, @NonNull CobaltFragment fragment,
-			@NonNull final JSONObject message)
+									@NonNull final JSONObject message)
 	{
 		String pluginClassName;
 		final String action;

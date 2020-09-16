@@ -29,7 +29,7 @@
 
 package org.cobaltians.cobalt.pubsub;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * An Interface to implement to be notified when a PubSubReceiver CobaltFragment
